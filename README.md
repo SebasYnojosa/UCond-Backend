@@ -15,7 +15,7 @@ El nombre refleja la esencia y el propósito fundamental de la aplicación, que 
 
 ## Planificación
 
-- [ ] Modelado de entidades en la base de datos  (Semana 6-7)
+- [x] Modelado de entidades en la base de datos  (Semana 6-7)
 - [ ] Funcionalidad de registro de usuarios  (Semana 7-8)
 - [ ] Funcionalidad de consultas de datos sobre usuarios  (Semana 7-8)
 - [ ] Funcionalidad para registro de condominios  (Semana 8-9)
