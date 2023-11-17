@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int          @id @default(autoincrement())
+  nombres        String
+  apellidos      String
+  cedula         String       @unique
+  sexo           String       @db.Char(1)
+  telefono       String
+  password       String
+  condominios    Condominio[]
+  viviendas      Vivienda[]
+  tesorero       Junta[]      @relation("tesorero")
+  presidente     Junta[]      @relation("presidente")
+  vicepresidente Junta[]      @relation("vicepresidente")
+  secretario     Junta[]      @relation("secretario")
+  reportes       Reporte[]
+  deudas         Deuda[]
+  mensajes       Mensaje[]
+}
+
+model Condominio {
+  id                   Int         @id @default(autoincrement())
+  administrador        User        @relation(fields: [id_administrador], references: [id])
+  id_administrador     Int
+  viviendas            Vivienda[]
+  junta                Junta?
+  nombre               String
+  tipo                 String
+  direccion            String
+  url_pagina_actuarial String
+  reserva              Float       @db.DoublePrecision
+  reportes             Reporte[]
+  gastos               Gasto[]
+  foros                Foro[]
+  cosas_comunes        CosaComun[]
+}
+
+model Vivienda {
+  id             Int        @id @default(autoincrement())
+  condominio     Condominio @relation(fields: [id_condominio], references: [id])
+  id_condominio  Int
+  propietario    User       @relation(fields: [id_propietario], references: [id])
+  id_propietario Int
+  nombre         String
+  tipo           String
+  alicuota       Float      @db.DoublePrecision
+  dimension      Float      @db.DoublePrecision
+}
+
+model Junta {
+  id                Int        @id @default(autoincrement())
+  condominio        Condominio @relation(fields: [id_condominio], references: [id])
+  id_condominio     Int        @unique
+  tesorero          User       @relation(fields: [id_tesorero], references: [id], name: "tesorero")
+  id_tesorero       Int
+  presidente        User       @relation(fields: [id_presidente], references: [id], name: "presidente")
+  id_presidente     Int
+  vicepresidente    User       @relation(fields: [id_vicepresidente], references: [id], name: "vicepresidente")
+  id_vicepresidente Int
+  secretario        User       @relation(fields: [id_secretario], references: [id], name: "secretario")
+  id_secretario     Int
+}
+
+model Gasto {
+  id            Int        @id @default(autoincrement())
+  condominio    Condominio @relation(fields: [id_condominio], references: [id])
+  id_condominio Int        @unique
+  monto         Float      @db.DoublePrecision
+  concepto      String
+  fecha_limite  DateTime
+  tipo          String
+  deudas        Deuda[]
+}
+
+model Deuda {
+  id            Int    @id @default(autoincrement())
+  usuario       User   @relation(fields: [id_usuario], references: [id])
+  id_usuario    Int    @unique
+  gasto         Gasto  @relation(fields: [id_gasto], references: [id])
+  id_gasto      Int    @unique
+  monto_usuario Float  @db.DoublePrecision
+  pagos         Pago[]
+}
+
+model Pago {
+  id           Int      @id @default(autoincrement())
+  deuda        Deuda    @relation(fields: [id_deuda], references: [id])
+  id_deuda     Int      @unique
+  monto_pagado Float    @db.DoublePrecision
+  fecha_pago   DateTime @default(now())
+  metodo_pago  String
+}
+
+model Reporte {
+  id            Int        @id @default(autoincrement())
+  condominio    Condominio @relation(fields: [id_condominio], references: [id])
+  id_condominio Int        @unique
+  usuario       User       @relation(fields: [id_usuario], references: [id])
+  id_usuario    Int        @unique
+  contenido     String
+  fecha         DateTime   @default(now())
+  estado        String
+}
+
+model Foro {
+  id             Int        @id @default(autoincrement())
+  condominio     Condominio @relation(fields: [id_condominio], references: [id])
+  id_condominio  Int        @unique
+  titulo         String
+  fecha_creacion DateTime   @default(now())
+  abierto        Boolean    @default(true)
+  mensajes       Mensaje[]
+}
+
+model Mensaje {
+  id          Int      @id @default(autoincrement())
+  foro        Foro     @relation(fields: [id_foro], references: [id])
+  id_foro     Int      @unique
+  usuario     User     @relation(fields: [id_usuario], references: [id])
+  id_usuario  Int      @unique
+  contenido   String
+  fecha_envio DateTime @default(now())
+}
+
+model CosaComun {
+  id            Int        @id @default(autoincrement())
+  condominio    Condominio @relation(fields: [id_condominio], references: [id])
+  id_condominio Int        @unique
+  nombre        String
+  es_de_todos   Boolean
+}
