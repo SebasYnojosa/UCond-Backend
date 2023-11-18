@@ -17,7 +17,7 @@ const userSchema = z
             .trim()
             .min(1, "El apellido no puede estar vacío")
             .max(255),
-        fecha_nacimiento: z.date(),
+        fecha_nacimiento: z.coerce.date(),
         correo: z
             .string()
             .trim()
