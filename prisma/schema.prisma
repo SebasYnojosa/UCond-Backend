@@ -11,22 +11,22 @@ datasource db {
 }
 
 model User {
-  id             Int          @id @default(autoincrement())
-  nombres        String
-  apellidos      String
-  cedula         String       @unique
-  sexo           String       @db.Char(1)
-  telefono       String
-  password       String
-  condominios    Condominio[]
-  viviendas      Vivienda[]
-  tesorero       Junta[]      @relation("tesorero")
-  presidente     Junta[]      @relation("presidente")
-  vicepresidente Junta[]      @relation("vicepresidente")
-  secretario     Junta[]      @relation("secretario")
-  reportes       Reporte[]
-  deudas         Deuda[]
-  mensajes       Mensaje[]
+  id               Int          @id @default(autoincrement())
+  nombre           String
+  apellido         String
+  fecha_nacimiento DateTime
+  correo           String       @unique
+  telefono         String
+  password         String
+  condominios      Condominio[]
+  viviendas        Vivienda[]
+  tesorero         Junta[]      @relation("tesorero")
+  presidente       Junta[]      @relation("presidente")
+  vicepresidente   Junta[]      @relation("vicepresidente")
+  secretario       Junta[]      @relation("secretario")
+  reportes         Reporte[]
+  deudas           Deuda[]
+  mensajes         Mensaje[]
 }
 
 model Condominio {
