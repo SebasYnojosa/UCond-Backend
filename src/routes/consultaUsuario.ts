@@ -21,7 +21,9 @@ consultaUsuarioRouter.get("/:id", async (req: Request, res: Response) => {
         if (!user) {
             return res.status(404).json({ error: "Usuario no encontrado" });
         }
-        res.json(user);
+        // Devolver el usuario en formato JSON sin la contraseña
+        const { password, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
     } catch (error) {
         // Manejo de errores
         res.status(500).json({ error: "Error al buscar el usuario" });

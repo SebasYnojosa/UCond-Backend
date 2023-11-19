@@ -1,4 +1,12 @@
 import express from "express";
+
+
+//ayuda a cargar las variables
+//de entorno correctamente ya que daba error en los get
+import dotenv from 'dotenv';
+dotenv.config();
+
+//rutas
 import { authRouter } from "./routes/auth";
 import consultaUsuarioRouter from "./routes/consultaUsuario";
 
