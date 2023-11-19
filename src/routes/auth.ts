@@ -150,3 +150,29 @@ authRouter.post("/log-in", async (req, res) => {
         }
     }
 });
+
+/**
+ * GET /api/auth/consultausuario/:id
+ * Busca un usuario por su ID
+ */
+authRouter.get("/consultausuario/:id", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
+        // Buscar usuario por ID en la base de datos
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        // Devolver el usuario en formato JSON sin la contraseña
+        const { password, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+    } catch (error) {
+        // Manejo de errores
+        res.status(500).json({ error: "Error al buscar el usuario" });
+        console.error(error);
+    }
+});
