@@ -22,7 +22,9 @@ consultaUsuarioRouter.get("/:id", async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Usuario no encontrado" });
         }
         // Devolver el usuario en formato JSON sin la contraseña
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = user;
+
         res.json(userWithoutPassword);
     } catch (error) {
         // Manejo de errores
