@@ -1,10 +1,10 @@
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
-    "nombres" TEXT NOT NULL,
-    "apellidos" TEXT NOT NULL,
-    "cedula" TEXT NOT NULL,
-    "sexo" CHAR(1) NOT NULL,
+    "nombre" TEXT NOT NULL,
+    "apellido" TEXT NOT NULL,
+    "fecha_nacimiento" TIMESTAMP(3) NOT NULL,
+    "correo" TEXT NOT NULL,
     "telefono" TEXT NOT NULL,
     "password" TEXT NOT NULL,
 
@@ -20,6 +20,8 @@ CREATE TABLE "Condominio" (
     "direccion" TEXT NOT NULL,
     "url_pagina_actuarial" TEXT NOT NULL,
     "reserva" DOUBLE PRECISION NOT NULL,
+    "estado_pago" BOOLEAN NOT NULL DEFAULT false,
+    "fecha_pago" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Condominio_pkey" PRIMARY KEY ("id")
 );
@@ -127,7 +129,7 @@ CREATE TABLE "CosaComun" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_cedula_key" ON "User"("cedula");
+CREATE UNIQUE INDEX "User_correo_key" ON "User"("correo");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Junta_id_condominio_key" ON "Junta"("id_condominio");

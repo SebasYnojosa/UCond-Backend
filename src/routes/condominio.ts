@@ -17,18 +17,24 @@ const condominioSchema = z.object({
     url_pagina_actuarial: z.string().url().trim(),
 });
 
-const upload = multer({ dest: "uploads/" });
+const paginas_upload = multer({ dest: "paginas/" });
+const comprobantes_upload = multer({ dest: "comprobantes_registro/" });
 
 export const condominioRouter = Router();
 const prisma = new PrismaClient();
 
-condominioRouter.post("/", upload.single("pdf"), async (req, res) => {
+/**
+ * POST /api/condominios/
+ * Crea un nuevo condominio
+ * El objeto de condominio se recibe en req.body
+ */
+condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
     try {
         //Verificar que el archivo sea pdf
         if (req.file && req.file.mimetype !== "application/pdf") {
             return res.status(400).json({ error: "El archivo debe ser PDF" });
         }
-        //parsear el id_administrador a numero
+        //Parsear el id_administrador a numero
         req.body.id_administrador = Number(req.body.id_administrador);
 
         //Verificar que el id_administrador exista
@@ -46,7 +52,7 @@ condominioRouter.post("/", upload.single("pdf"), async (req, res) => {
             req.protocol +
             "://" +
             req.get("host") +
-            "/uploads/" +
+            "/paginas/" +
             (req.file ? req.file.filename : "");
         const condominio = condominioSchema.parse({
             ...req.body,
@@ -71,3 +77,40 @@ condominioRouter.post("/", upload.single("pdf"), async (req, res) => {
         console.error(error);
     }
 });
+
+/**
+ * POST /api/condominios/:id/comprobante
+ * Guarda un comprobante
+ */
+condominioRouter.post(
+    "/:idCondominio/comprobante",
+    comprobantes_upload.single("comprobante"),
+    async (req, res) => {
+        try {
+            // Verificar tipo de comprobante
+            if (
+                req.file &&
+                ["image/jpeg", "application/pdf"].includes(req.file.mimetype)
+            ) {
+                return res
+                    .status(400)
+                    .json({ error: "El archivo debe ser PDF o imagen" });
+            }
+            // Actualizar condominio y marcar como pagado
+            const idCondominio = Number(req.params.idCondominio);
+            const condominio = await prisma.condominio.update({
+                where: { id: idCondominio },
+                data: {
+                    estado_pago: true,
+                },
+            });
+            return condominio;
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                return res
+                    .status(400)
+                    .json({ error: "Datos inválidos", mensajes: error.issues });
+            }
+        }
+    },
+);
