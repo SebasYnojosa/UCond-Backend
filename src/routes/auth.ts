@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
@@ -69,14 +70,20 @@ authRouter.post("/sign-up", async (req, res) => {
     try {
         // Obtener y validar cuerpo de la petición
         const parsedUser = userSchema.parse(req.body);
+
         // Encriptar contraseña
         const salt = await bcrypt.genSalt(10);
         parsedUser.password = await bcrypt.hash(parsedUser.password, salt);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { confirmacion, ...usuarioBD } = parsedUser;
+
         // Agregar a base de datos y devolver información
-        const user = await prisma.user.create({ data: usuarioBD });
-        res.json(user);
+        const { confirmacion, ...usuarioBD } = parsedUser;
+        const { password, ...user } = await prisma.user.create({
+            data: usuarioBD,
+        });
+
+        // Iniciar sesión de usuario
+        const token = jwt.sign(user, process.env.JWT_SECRET as jwt.Secret);
+        res.json({ token });
     } catch (error) {
         // Error de validación
         if (error instanceof z.ZodError) {
@@ -120,7 +127,6 @@ authRouter.post("/log-in", async (req, res) => {
         );
 
         if (validPassword) {
-            //eslint-disable-next-line @typescript-eslint/no-unused-vars
             //Sacar usuario sin password
             const { password, ...usuario_sin_password } = userBD;
             const token = jwt.sign(
