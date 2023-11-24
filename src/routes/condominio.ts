@@ -4,9 +4,9 @@ import multer from "multer";
 import { z } from "zod";
 
 const condominioSchema = z.object({
-    id_administrador: z.number().refine((value) => value > 0, {
-        message: "Se debe especificar un id de administrador válido",
-    }),
+    id_administrador: z
+        .number()
+        .min(1, "Se debe especificar un id de administrador válido"),
     nombre: z.string().trim().min(1, "El nombre no puede estar vacío").max(255),
     tipo: z.string().trim().min(1, "El tipo no puede estar vacío").max(255),
     direccion: z
@@ -33,8 +33,7 @@ const upload = multer({ dest: "uploads/" });
 export const condominioRouter = Router();
 const prisma = new PrismaClient();
 
-//Crear condominio
-condominioRouter.post("/create", upload.single("pdf"), async (req, res) => {
+condominioRouter.post("/", upload.single("pdf"), async (req, res) => {
     try {
         //Verificar que el archivo sea pdf
         if (req.file && req.file.mimetype !== "application/pdf") {
@@ -64,7 +63,6 @@ condominioRouter.post("/create", upload.single("pdf"), async (req, res) => {
             ...req.body,
             url_pagina_actuarial: url_pagina_actuarial,
         });
-        //Crear condominio
         const nuevoCondominio = await prisma.condominio.create({
             data: {
                 ...condominio,
@@ -72,7 +70,7 @@ condominioRouter.post("/create", upload.single("pdf"), async (req, res) => {
                 reserva: 0,
             },
         });
-        res.json(nuevoCondominio);
+        res.json({ condominio: nuevoCondominio });
     } catch (error) {
         //Error de validacion
         if (error instanceof z.ZodError) {
