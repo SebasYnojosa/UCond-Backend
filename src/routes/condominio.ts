@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import multer from "multer";
 import { z } from "zod";
 
+//Esquema de validacion para condominios
 const condominioSchema = z.object({
     id_administrador: z
         .number()
@@ -17,6 +18,7 @@ const condominioSchema = z.object({
     url_pagina_actuarial: z.string().url().trim(),
 });
 
+//Esquema de validacion para actualizar condominios
 const updatedCondominioSchema = z.object({
     id_administrador: z
         .number()
