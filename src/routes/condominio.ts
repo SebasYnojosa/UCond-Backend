@@ -33,6 +33,11 @@ const upload = multer({ dest: "uploads/" });
 export const condominioRouter = Router();
 const prisma = new PrismaClient();
 
+/**
+ * POST /api/condominio/
+ * Crea un nuevo condominio
+ * El objeto de condominio se recibe en req.body
+ */
 condominioRouter.post("/", upload.single("pdf"), async (req, res) => {
     try {
         //Verificar que el archivo sea pdf
@@ -83,10 +88,12 @@ condominioRouter.post("/", upload.single("pdf"), async (req, res) => {
     }
 });
 
-//Eliminar condominio
-/*TODO: Eliminar los registros de los gastos y la reserva?
-        Autenticar que el usuario sea el administrador del condominio
-*/
+/**
+ * DELETE /api/condominio/:id
+ * Elimina un condominio por su id
+ * TODO: Eliminar los registros de los gastos y la reserva?
+         Autenticar que el usuario sea el administrador del condominio
+ */
 condominioRouter.delete("/:id", async (req, res) => {
     try {
         //parsear el id_condominio a numero
@@ -109,9 +116,11 @@ condominioRouter.delete("/:id", async (req, res) => {
     }
 });
 
-//Actualizar datos del condominio (Admin o pagina actuarial)
-//TODO: Autenticar que el usuario sea el administrador del condominio
-
+/**
+ * PUT /api/condominio/:id
+ * Actualiza un condominio por su id
+ * TODO: Autenticar que el usuario sea el administrador del condominio
+ */
 condominioRouter.put("/:id", upload.single("pdf"), async (req, res) => {
     try {
         //Verificar que el archivo sea pdf
@@ -172,7 +181,10 @@ condominioRouter.put("/:id", upload.single("pdf"), async (req, res) => {
     }
 });
 
-//Obtener condominio por id
+/**
+ * GET /api/condominio/:id
+ * Busca un condominio por su id
+ */
 condominioRouter.get("/:id", async (req, res) => {
     try {
         //parsear el id_condominio a numero
