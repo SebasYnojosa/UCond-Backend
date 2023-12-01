@@ -83,17 +83,19 @@ model Gasto {
   concepto      String
   fecha_limite  DateTime
   tipo          String
+  activo        Boolean    @default(true)
   deudas        Deuda[]
 }
 
 model Deuda {
-  id             Int    @id @default(autoincrement())
-  usuario        User?  @relation(fields: [id_usuario], references: [id])
-  id_usuario     Int?   @unique
-  cedula_usuario String @unique
-  gasto          Gasto  @relation(fields: [id_gasto], references: [id])
-  id_gasto       Int    @unique
-  monto_usuario  Float  @db.DoublePrecision
+  id             Int     @id @default(autoincrement())
+  usuario        User?   @relation(fields: [id_usuario], references: [id])
+  id_usuario     Int?    @unique
+  cedula_usuario String  @unique
+  gasto          Gasto   @relation(fields: [id_gasto], references: [id])
+  id_gasto       Int     @unique
+  monto_usuario  Float   @db.DoublePrecision
+  activa         Boolean @default(true)
   pagos          Pago[]
 }
 
