@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import multer from "multer";
 import { z } from "zod";
 
+//Esquema de validacion para condominios
 const condominioSchema = z.object({
     id_administrador: z
         .number()
@@ -39,6 +40,18 @@ const condominioSchema = z.object({
         )
         .min(1, "Debe haber al menos una vivienda"),
     url_pagina_actuarial: z.string().url().trim(),
+});
+
+//Esquema de validacion para actualizar condominios
+const updatedCondominioSchema = z.object({
+    id_administrador: z
+        .number()
+        .optional()
+        .refine((value) => value !== undefined && value > 0, {
+            message: "Se debe especificar un id de administrador válido",
+        }),
+
+    url_pagina_actuarial: z.string().url().trim().optional(),
 });
 
 const paginas_upload = multer({ dest: "paginas/" });
@@ -153,3 +166,118 @@ condominioRouter.post(
         }
     },
 );
+
+/* DELETE /api/condominio/:id
+ * Elimina un condominio por su id
+ * TODO: Eliminar los registros de los gastos y la reserva?
+         Autenticar que el usuario sea el administrador del condominio
+ */
+condominioRouter.delete("/:id", async (req, res) => {
+    try {
+        //parsear el id_condominio a numero
+        const id = Number(req.params.id);
+        const condominio = await prisma.condominio.findUnique({
+            where: { id: id },
+        });
+
+        if (!condominio) {
+            return res.status(404).json({ error: "El condominio no existe" });
+        }
+
+        await prisma.condominio.delete({
+            where: { id: id },
+        });
+        res.json(condominio);
+    } catch (error) {
+        res.status(500).json({ error: "Error al eliminar el condominio" });
+        console.error(error);
+    }
+});
+
+/**
+ * PUT /api/condominio/:id
+ * Actualiza un condominio por su id
+ * TODO: Autenticar que el usuario sea el administrador del condominio
+ */
+condominioRouter.put("/:id", paginas_upload.single("pdf"), async (req, res) => {
+    try {
+        //Verificar que el archivo sea pdf
+        if (req.file && req.file.mimetype !== "application/pdf") {
+            return res.status(400).json({ error: "El archivo debe ser PDF" });
+        }
+        //parsear el id_administrador a numero
+        req.body.id_administrador = Number(req.body.id_administrador);
+
+        //Verificar que el id_administrador exista
+        const user = await prisma.user.findUnique({
+            where: { id: req.body.id_administrador },
+        });
+        if (!user) {
+            return res
+                .status(400)
+                .json({ error: "El id de administrador no existe" });
+        }
+        //parsear el id_condominio a numero
+        const id = Number(req.params.id);
+
+        //Verificar que el condominio exista
+        let condominio = await prisma.condominio.findUnique({
+            where: { id: id },
+        });
+        if (!condominio) {
+            return res.status(404).json({ error: "El condominio no existe" });
+        }
+
+        //Crear url para el pdf
+        const url_pagina_actuarial =
+            req.protocol +
+            "://" +
+            req.get("host") +
+            "/uploads/" +
+            (req.file ? req.file.filename : "");
+        const updatedCondominio = updatedCondominioSchema.parse({
+            ...req.body,
+            url_pagina_actuarial: url_pagina_actuarial,
+        });
+        //Condominio actualizado
+        condominio = await prisma.condominio.update({
+            where: { id: id },
+            data: updatedCondominio,
+        });
+        res.json(condominio);
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return res.status(400).json({
+                error: "Datos para modificar inválidos",
+                mensajes: error.issues,
+            });
+        }
+        res.status(500).json({
+            error: "Error al actualizar el condominio",
+        });
+        console.error(error);
+    }
+});
+
+/**
+ * GET /api/condominio/:id
+ * Busca un condominio por su id
+ */
+condominioRouter.get("/:id", async (req, res) => {
+    try {
+        //parsear el id_condominio a numero
+        const id = Number(req.params.id);
+
+        const condominio = await prisma.condominio.findUnique({
+            where: { id: id },
+        });
+        //Verificar que el condominio exista
+        if (!condominio) {
+            return res.status(404).json({ error: "El condominio no existe" });
+        }
+        res.json(condominio);
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener el condominio" });
+        console.error(error);
+    }
+});
