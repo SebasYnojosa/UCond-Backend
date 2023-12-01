@@ -28,11 +28,6 @@ const condominioSchema = z.object({
                     .trim()
                     .min(1, "La cedula del propietario no puede estar vacía")
                     .max(15),
-                tipo: z
-                    .string()
-                    .trim()
-                    .min(1, "El tipo de vivienda no puede estar vacío")
-                    .max(255),
                 dimension: z
                     .number()
                     .min(1, "La dimensión de vivienda debe ser positiva"),
