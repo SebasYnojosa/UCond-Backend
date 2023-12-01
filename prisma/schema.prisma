@@ -14,6 +14,7 @@ model User {
   id               Int          @id @default(autoincrement())
   nombre           String
   apellido         String
+  cedula           String       @unique
   fecha_nacimiento DateTime
   correo           String       @unique
   telefono         String
@@ -40,6 +41,8 @@ model Condominio {
   direccion            String
   url_pagina_actuarial String
   reserva              Float       @db.DoublePrecision
+  estado_pago          Boolean     @default(false)
+  fecha_pago           DateTime    @default(now())
   reportes             Reporte[]
   gastos               Gasto[]
   foros                Foro[]
@@ -47,15 +50,15 @@ model Condominio {
 }
 
 model Vivienda {
-  id             Int        @id @default(autoincrement())
-  condominio     Condominio @relation(fields: [id_condominio], references: [id])
-  id_condominio  Int
-  propietario    User       @relation(fields: [id_propietario], references: [id])
-  id_propietario Int
-  nombre         String
-  tipo           String
-  alicuota       Float      @db.DoublePrecision
-  dimension      Float      @db.DoublePrecision
+  id                 Int        @id @default(autoincrement())
+  condominio         Condominio @relation(fields: [id_condominio], references: [id])
+  id_condominio      Int
+  propietario        User?      @relation(fields: [id_propietario], references: [id])
+  id_propietario     Int?
+  nombre             String
+  cedula_propietario String
+  alicuota           Float      @db.DoublePrecision
+  dimension          Float      @db.DoublePrecision
 }
 
 model Junta {
