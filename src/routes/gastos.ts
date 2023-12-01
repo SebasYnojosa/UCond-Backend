@@ -27,17 +27,28 @@ gastosRouter.post("/", async (req, res) => {
         // Verifica que el id del condominio exista
         const condo = await prisma.condominio.findUnique({
             where: { id: req.body.id_condominio },
+            include: { viviendas: true },
         });
-
         if (!condo)
             return res.status(404).json({ error: "El condominio no existe" });
 
+        // Agregar deudas si el gasto es comun
         const gasto = gastoSchema.parse({ ...req.body });
+        const deudas =
+            gasto.tipo === "comun"
+                ? {
+                      create: condo.viviendas.map((vivienda) => ({
+                          cedula_usuario: vivienda.cedula_propietario,
+                          monto_usuario: gasto.monto * vivienda.alicuota,
+                      })),
+                  }
+                : { create: [] };
 
         // Crea el gasto
         const nuevoGasto = await prisma.gasto.create({
             data: {
                 ...gasto,
+                deudas,
             },
         });
         res.json({ gasto: nuevoGasto });

@@ -87,13 +87,14 @@ model Gasto {
 }
 
 model Deuda {
-  id            Int    @id @default(autoincrement())
-  usuario       User   @relation(fields: [id_usuario], references: [id])
-  id_usuario    Int    @unique
-  gasto         Gasto  @relation(fields: [id_gasto], references: [id])
-  id_gasto      Int    @unique
-  monto_usuario Float  @db.DoublePrecision
-  pagos         Pago[]
+  id             Int    @id @default(autoincrement())
+  usuario        User?  @relation(fields: [id_usuario], references: [id])
+  id_usuario     Int?   @unique
+  cedula_usuario String @unique
+  gasto          Gasto  @relation(fields: [id_gasto], references: [id])
+  id_gasto       Int    @unique
+  monto_usuario  Float  @db.DoublePrecision
+  pagos          Pago[]
 }
 
 model Pago {
