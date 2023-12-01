@@ -14,6 +14,30 @@ const condominioSchema = z.object({
         .trim()
         .min(1, "La dirección no puede estar vacía")
         .max(255),
+    viviendas: z
+        .array(
+            z.object({
+                nombre: z
+                    .string()
+                    .trim()
+                    .min(1, "El nombre de vivienda no puede estar vacío")
+                    .max(255),
+                cedula_propietario: z
+                    .string()
+                    .trim()
+                    .min(1, "La cedula del propietario no puede estar vacía")
+                    .max(15),
+                tipo: z
+                    .string()
+                    .trim()
+                    .min(1, "El tipo de vivienda no puede estar vacío")
+                    .max(255),
+                dimension: z
+                    .number()
+                    .min(1, "La dimensión de vivienda debe ser positiva"),
+            }),
+        )
+        .min(1, "Debe haber al menos una vivienda"),
     url_pagina_actuarial: z.string().url().trim(),
 });
 
@@ -54,17 +78,32 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
             req.get("host") +
             "/paginas/" +
             (req.file ? req.file.filename : "");
+        //Parsear condominio
         const condominio = condominioSchema.parse({
             ...req.body,
             url_pagina_actuarial: url_pagina_actuarial,
         });
+        const { viviendas, ...datosCondominio } = condominio;
+        // Calcular alícuotas
+        const dimensionTotal = viviendas.reduce(
+            (acc, vivienda) => acc + vivienda.dimension,
+            0,
+        );
+        const viviendas_con_alicuotas = viviendas.map((vivienda) => ({
+            ...vivienda,
+            alicuota: vivienda.dimension / dimensionTotal,
+        }));
         const nuevoCondominio = await prisma.condominio.create({
             data: {
-                ...condominio,
+                ...datosCondominio,
                 // Inicializar la reserva en 0
                 reserva: 0,
+                viviendas: {
+                    create: [...viviendas_con_alicuotas],
+                },
             },
         });
+        //Registrar cada vivienda en la base de datos
         res.json({ condominio: nuevoCondominio });
     } catch (error) {
         //Error de validacion
