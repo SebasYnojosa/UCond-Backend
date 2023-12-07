@@ -33,7 +33,8 @@ const condominioSchema = z.object({
                     .min(1, "La dimensión de vivienda debe ser positiva"),
             }),
         )
-        .min(1, "Debe haber al menos una vivienda"),
+        .min(1, "Debe haber al menos una vivienda")
+        .optional(),
     url_pagina_actuarial: z.string().url().trim(),
 });
 
@@ -47,6 +48,18 @@ const updatedCondominioSchema = z.object({
         }),
 
     url_pagina_actuarial: z.string().url().trim().optional(),
+});
+
+// Esquema de validación para el gasto
+const gastoSchema = z.object({
+    monto: z.number().min(1, "El monto no puede ser negativo"),
+    concepto: z
+        .string()
+        .trim()
+        .min(1, "El concepto no puede estar vacío")
+        .max(255),
+    fecha_limite: z.coerce.date(),
+    tipo: z.string().trim().min(1, "El tipo de gasto no puede estar vacío"),
 });
 
 const paginas_upload = multer({ dest: "paginas/" });
@@ -93,14 +106,18 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
         });
         const { viviendas, ...datosCondominio } = condominio;
         // Calcular alícuotas
-        const dimensionTotal = viviendas.reduce(
+        const dimensionTotal = viviendas?.reduce(
             (acc, vivienda) => acc + vivienda.dimension,
             0,
         );
-        const viviendas_con_alicuotas = viviendas.map((vivienda) => ({
-            ...vivienda,
-            alicuota: vivienda.dimension / dimensionTotal,
-        }));
+        const viviendas_con_alicuotas = viviendas
+            ? viviendas.map((vivienda) => ({
+                  ...vivienda,
+                  alicuota: dimensionTotal
+                      ? vivienda.dimension / dimensionTotal
+                      : 0,
+              }))
+            : [];
         const nuevoCondominio = await prisma.condominio.create({
             data: {
                 ...datosCondominio,
@@ -274,5 +291,110 @@ condominioRouter.get("/:id", async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: "Error al obtener el condominio" });
         console.error(error);
+    }
+});
+
+/**
+ * GET /api/condominio/:id/inquilinos
+ * Busca los inquilinos de un condominio por su id
+ */
+condominioRouter.get("/:id/inquilinos", async (req, res) => {
+    try {
+        const idCondominio = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
+        // Buscar viviendas asociadas al condominio
+        const viviendas_condominio = await prisma.vivienda.findMany({
+            where: { id_condominio: idCondominio },
+            include: { propietario: true },
+        });
+        // Filtrar propietarios únicos de las viviendas obtenidas
+        const inquilinos = viviendas_condominio
+            .map((vivienda) => vivienda.propietario)
+            .filter(
+                (propietario, index, self) =>
+                    self.findIndex((p) => p?.id === propietario?.id) === index,
+            );
+        res.json({ inquilinos });
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener los inquilinos" });
+    }
+});
+
+/**
+ * GET /api/condominio/:id/gastos
+ * Busca los gastos asociados a un condominio por id
+ */
+condominioRouter.get("/:id/gastos", async (req, res) => {
+    try {
+        const idCondominio = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
+        // Buscar gastos asociados al condominio
+        const gastos = await prisma.gasto.findMany({
+            where: { id_condominio: idCondominio },
+        });
+        res.json({
+            pagados: gastos.filter((g) => g.activo),
+            por_pagar: gastos.filter((g) => !g.activo),
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: "Error al obtener los gastos del condominio",
+        });
+    }
+});
+
+/**
+ * POST /api/condominio/:id/gastos
+ * Registra un gasto en el condominio
+ */
+condominioRouter.post("/:id/gastos", async (req, res) => {
+    try {
+        const reqGasto = gastoSchema.parse(req.body);
+        const idCondominio = parseInt(req.params.id);
+        // Obtener viviendas
+        const viviendas = await prisma.vivienda.findMany({
+            where: { id_condominio: idCondominio },
+        });
+        if (!viviendas.length) {
+            return res.status(404).json({ error: "Condominio no encontrado" });
+        }
+        // Crear gasto con deudas asignadas
+        const deudas = viviendas.map((v) => ({
+            id_usuario: v.id_propietario,
+            cedula_usuario: v.cedula_propietario,
+            monto_usuario: reqGasto.monto * v.alicuota,
+        }));
+        const gasto = await prisma.gasto.create({
+            data: {
+                id_condominio: parseInt(req.params.id),
+                ...reqGasto,
+                deudas: {
+                    create: [...deudas],
+                },
+            },
+        });
+        // Devolver gasto
+        res.json({ gasto });
+    } catch (error) {
+        res.status(500).json({ error: "Error creando condominio" });
+    }
+});
+
+/**
+ * GET /api/condominio/:id/reportes
+ * Busca los reportes asociados a un condominio por id
+ */
+condominioRouter.get("/:id/reportes", async (req, res) => {
+    try {
+        const idCondominio = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
+        // Buscar reportes asociados al condominio
+        const reportes = await prisma.reporte.findMany({
+            where: { id_condominio: idCondominio },
+        });
+        res.json({
+            reportes,
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: "Error al obtener los reportes del condominio",
+        });
     }
 });
