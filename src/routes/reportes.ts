@@ -14,6 +14,11 @@ const reporteSchema = z.object({
 export const reportesRouter = Router();
 const prisma = new PrismaClient();
 
+/**
+ * POST /api/reportes
+ * Crea un nuevo reporte
+ */
+
 reportesRouter.post("/", async (req, res) => {
     try {
         // Verifica que el condominio existe
