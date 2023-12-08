@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { getMonitor } from "consulta-dolar-venezuela";
 
 const gastoSchema = z.object({
     id_condominio: z
@@ -16,7 +17,6 @@ const gastoSchema = z.object({
     tipo: z.string().trim().min(1, "El tipo no puede estar vacio").max(255),
 });
 
-const { getMonitor } = require("consulta-dolar-venezuela");
 const dolarBcv = getMonitor("bcv", "price");
 
 export const gastosRouter = Router();
