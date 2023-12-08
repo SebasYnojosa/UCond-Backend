@@ -116,7 +116,7 @@ model Reporte {
   id_usuario    Int        @unique
   contenido     String
   fecha         DateTime   @default(now())
-  estado        String     @default("Pendiente")
+  estado        String     
 }
 
 model Foro {

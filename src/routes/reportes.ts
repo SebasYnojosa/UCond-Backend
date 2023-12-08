@@ -35,13 +35,18 @@ reportesRouter.post("/", async (req, res) => {
         });
         if (!user)
             return res.status(404).json({ error: "El usuario no existe" });
+    
+        const reporte = reporteSchema.parse(req.body);
 
         // Crea el reporte
-        await prisma.reporte.create({
+        const nuevoReporte = await prisma.reporte.create({
             data: {
-                ...req.body,
+                ...reporte,
+                estado: "pendiente",
             },
         });
+        res.json(nuevoReporte);
+
     } catch (error) {
         if (error instanceof z.ZodError) {
             return res.status(400).json({ error: error.issues });

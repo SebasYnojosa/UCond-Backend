@@ -22,9 +22,9 @@ const prisma = new PrismaClient();
 
 /**
  * POST /api/gastos
- * 
- * 
- * 
+ *
+ *
+ *
  */
 gastosRouter.post("/", async (req, res) => {
     try {
@@ -68,4 +68,3 @@ gastosRouter.post("/", async (req, res) => {
         console.log(error);
     }
 });
- 
