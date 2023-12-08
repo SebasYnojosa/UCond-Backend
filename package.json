@@ -4,8 +4,8 @@
 	"description": "Backend para el proyecto UCond de la materia Ingenieria de Software",
 	"main": "index.js",
 	"scripts": {
-		"start": "node build/index.js",
 		"tsc": "tsc",
+		"start": "tsc && node build/index.js",
 		"dev": "ts-node-dev --files src/index.ts"
 	},
 	"devDependencies": {
