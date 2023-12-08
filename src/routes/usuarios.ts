@@ -195,13 +195,24 @@ usuariosRouter.get("/:userId/saldoEnContra", async (req, res) => {
         }
 
         let saldoEnContra = 0;
+        let saldoAFavor = 0;
         user.deudas.forEach((deuda) => {
             if (deuda.activa) {
                 saldoEnContra += deuda.monto_usuario;
             }
         });
 
-        res.json({ saldoEnContra });
+        user.pagos.forEach((pago) => {
+            {
+                if (!pago) {
+                    saldoAFavor += pago.monto;
+                }
+            }
+        });
+
+        const saldo = saldoAFavor - saldoEnContra;
+
+        res.json({ saldo });
     } catch (error) {
         console.log(error);
         res.status(500).json({
