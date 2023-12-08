@@ -54,6 +54,7 @@
 * devuelve: `{gasto: *nuevo gasto*}`
 
 ### Precio dolar
+* Implementado en gastos
 
 ## Usuarios
 
