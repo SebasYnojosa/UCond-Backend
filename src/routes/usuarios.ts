@@ -131,17 +131,27 @@ usuariosRouter.get("/:userId/deudas", async (req, res) => {
             }
             // Devolver deudas activas que pertenezcan al condominio
             return res.json({
-                deudas: user.deudas.filter(
-                    (deuda) =>
-                        deuda.activa &&
+                deudas: user.deudas.filter((deuda) => {
+                    console.log("deuda", deuda);
+                    deuda.activa &&
                         condominio.gastos.some(
                             (gasto) => gasto.id === deuda.id_gasto,
-                        ),
-                ),
+                        );
+                }),
             });
         }
         // Devolver las deudas activas del usuario
-        res.json({ deudas: user.deudas.filter((deuda) => deuda.activa) });
+        console.log("deuda", user.deudas[0]);
+        user.deudas.forEach((deuda) => {
+            console.log("deuda", deuda);
+        });
+
+        res.json({
+            deudas: user.deudas.filter((deuda) => {
+                console.log("deuda: ", deuda);
+                deuda.activa;
+            }),
+        });
     } catch (error) {
         // Manejo de errores
         console.log(error);
