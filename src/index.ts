@@ -18,7 +18,7 @@ import { gastosRouter } from "./routes/gastos";
 const app = express();
 app.use(express.json());
 app.use(cors());
-const PORT = Number(process.env.port) || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Registrar rutas
 app.get("/api", (_req, res) => res.send("Hello world!"));
