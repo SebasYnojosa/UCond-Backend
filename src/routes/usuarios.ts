@@ -177,4 +177,69 @@ usuariosRouter.get("/:userId/deudas", async (req, res) => {
     }
 });
 
+/**
+ * GET /api/usuarios/:userId/saldoEnContra
+ * Devuelve la sumatoria de deudas activas de un usuario
+ */
+
+usuariosRouter.get("/:userId/saldoEnContra", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { deudas: true },
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        let saldoEnContra = 0;
+        user.deudas.forEach((deuda) => {
+            if (deuda.activa) {
+                saldoEnContra += deuda.monto_usuario;
+            }
+        });
+
+        res.json({ saldoEnContra });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error,
+        });
+    }
+});
+
+/**
+ * GET /api/usuarios/:userId/saldoEnContra
+ * Devuelve la sumatoria de deudas inactivas de un usuario
+ */
+
+usuariosRouter.get("/:userId/saldoAFavor", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { deudas: true },
+        });
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        let saldoAFavor = 0;
+        user.deudas.forEach((deuda) => {
+            console.log(deuda);
+            if (!deuda.activa) {
+                saldoAFavor += deuda.monto_usuario;
+            }
+        });
+        return res.json({ saldoAFavor });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error,
+        });
+    }
+});
+
 export { usuariosRouter };
