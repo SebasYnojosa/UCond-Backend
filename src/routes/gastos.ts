@@ -16,6 +16,9 @@ const gastoSchema = z.object({
     tipo: z.string().trim().min(1, "El tipo no puede estar vacio").max(255),
 });
 
+const { getMonitor } = require("consulta-dolar-venezuela");
+const dolarBcv = getMonitor("bcv", "price");
+
 export const gastosRouter = Router();
 const prisma = new PrismaClient();
 
@@ -57,6 +60,16 @@ gastosRouter.post("/", async (req, res) => {
             return res
                 .status(400)
                 .json({ error: "Datos invalidos", mensaje: error.issues });
+        res.status(500).json(error);
+        console.log(error);
+    }
+});
+
+gastosRouter.get("/dolarprecio", async (_req, res) => {
+    try {
+        const dolar = await dolarBcv;
+        res.json({ dolar });
+    } catch (error) {
         res.status(500).json(error);
         console.log(error);
     }
