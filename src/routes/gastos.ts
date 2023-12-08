@@ -2,6 +2,7 @@ import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
+// Esquema de validacion de gastos
 const gastoSchema = z.object({
     id_condominio: z
         .number()
@@ -19,6 +20,12 @@ const gastoSchema = z.object({
 export const gastosRouter = Router();
 const prisma = new PrismaClient();
 
+/**
+ * POST /api/gastos
+ * 
+ * 
+ * 
+ */
 gastosRouter.post("/", async (req, res) => {
     try {
         // Convierte el monto de string a numero
@@ -61,3 +68,4 @@ gastosRouter.post("/", async (req, res) => {
         console.log(error);
     }
 });
+ 
