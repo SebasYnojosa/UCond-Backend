@@ -3,6 +3,8 @@ import express from "express";
 // Ayuda a cargar las variables
 // de entorno correctamente ya que daba error en los get
 import dotenv from "dotenv";
+import cors from "cors";
+
 dotenv.config();
 
 // Rutas
@@ -15,6 +17,7 @@ import { gastosRouter } from "./routes/gastos";
 // Inicializar aplicación
 const app = express();
 app.use(express.json());
+app.use(cors());
 const PORT = Number(process.env.port) || 3000;
 
 // Registrar rutas
