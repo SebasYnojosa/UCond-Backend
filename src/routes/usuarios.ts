@@ -101,6 +101,32 @@ usuariosRouter.put("/:id", async (req, res) => {
 });
 
 /**
+ * GET /api/usuarios/:userId/condominios
+ * Busca los condominios de un usuario por su ID
+ */
+usuariosRouter.get("/:userId/condominios", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId); // Obtener el ID de los parámetros de la URL
+        const viviendas_usuario = await prisma.vivienda.findMany({
+            where: { id_propietario: userId },
+            include: { condominio: true },
+        });
+        // Filtrar todos los condominios únicos de las viviendas del usuario
+        const condominios = viviendas_usuario
+            .map((vivienda) => vivienda.condominio)
+            .filter(
+                (condominio, index, self) =>
+                    self.findIndex((c) => c.id === condominio.id) === index,
+            );
+        res.json({ condominios });
+    } catch (error) {
+        res.status(500).json({
+            error: "Error al buscar los condominios del usuario",
+        });
+    }
+});
+
+/**
  * GET /api/usuarios/:userId/deudas?idCondominio=<idCondominio>
  * Busca las deudas de un usuario por su ID
  */
