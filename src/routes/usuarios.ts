@@ -177,4 +177,64 @@ usuariosRouter.get("/:userId/deudas", async (req, res) => {
     }
 });
 
+/**
+ * GET /api/usuarios/:userId/pagos?idCondominio=<idCondominio>
+ * Busca el historial de pagos de un usuario por su ID
+ */
+usuariosRouter.get("/:userId/pagos", async (req, res) => {
+    try {
+        // Obtener id de los parámetros
+        const userId = parseInt(req.params.userId);
+        // Buscar usuario por ID en la base de datos
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { deudas: { include: { pagos: true } } },
+        });
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+        // Trabajo extra si se especifica la id del condominio
+        if (req.query.idCondominio) {
+            const idCondominio = parseInt(req.query.idCondominio as string);
+            // Buscar condominio por ID en la base de datos
+            const condominio = await prisma.condominio.findUnique({
+                where: { id: idCondominio },
+                include: { gastos: true },
+            });
+            if (!condominio) {
+                return res
+                    .status(404)
+                    .json({ error: "Condominio no encontrado" });
+            }
+            // Devolver pagos que pertenezcan al condominio
+            const deudasConConcepto = [];
+            for (const deuda of user.deudas) {
+                const gasto = condominio.gastos.find(
+                    (gasto) => gasto.id === deuda.id_gasto,
+                );
+                if (gasto) {
+                    deudasConConcepto.push({
+                        ...deuda,
+                        concepto: gasto.concepto,
+                    });
+                }
+            }
+            return res.json({
+                pagos: deudasConConcepto.flatMap((deuda) =>
+                    deuda.pagos.map((pago) => ({
+                        ...pago,
+                        concepto: deuda.concepto,
+                    })),
+                ),
+            });
+        }
+    } catch (error) {
+        // Manejo de errores
+        console.log(error);
+        res.status(500).json({
+            error,
+        });
+    }
+});
+
 export { usuariosRouter };
