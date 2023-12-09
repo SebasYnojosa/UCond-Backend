@@ -5,7 +5,7 @@
 	"main": "build/src/index.js",
 	"type": "module",
 	"scripts": {
-		"tsc": "tsc",
+		"tsc": "npm install && tsc",
 		"start": "tsc && node --es-module-specifier-resolution=node build/src/index.js",
 		"dev": "tsx src/index.ts"
 	},
