@@ -120,7 +120,7 @@ model Reporte {
   id_usuario    Int        @unique
   contenido     String
   fecha         DateTime   @default(now())
-  estado        String
+  estado        String     
 }
 
 model Foro {

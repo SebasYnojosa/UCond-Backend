@@ -13,6 +13,7 @@ import { condominioRouter } from "./routes/condominio";
 import { usuariosRouter } from "./routes/usuarios";
 import { authProtected } from "../utils/auth";
 import { gastosRouter } from "./routes/gastos";
+import { reportesRouter } from "./routes/reportes";
 
 // Inicializar aplicación
 const app = express();
@@ -27,5 +28,6 @@ app.use("/api/auth", authRouter);
 app.use("/api/condominios", condominioRouter);
 app.use("/api/usuarios", authProtected, usuariosRouter);
 app.use("/api/gastos", authProtected, gastosRouter);
+app.use("/api/reportes", authProtected, reportesRouter);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
