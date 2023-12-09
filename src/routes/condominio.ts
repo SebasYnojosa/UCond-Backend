@@ -379,6 +379,57 @@ condominioRouter.post("/:id/gastos", async (req, res) => {
 });
 
 /**
+ * GET /api/condominio/:id/pagos
+ * Busca los pagos asociados a un condominio por id
+ */
+condominioRouter.get("/:id/pagos", async (req, res) => {
+    try {
+        const idCondominio = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
+        // Buscar pagos asociados al condominio
+        const pagos = await prisma.pago.findMany({
+            include: { deuda: { include: { gasto: true, usuario: true } } },
+        });
+
+        res.json({
+            pagados: pagos
+                .filter(
+                    (p) =>
+                        p.deuda.gasto.id_condominio === idCondominio &&
+                        p.deuda.gasto.activo,
+                )
+                .map((p) => ({
+                    id: p.id,
+                    nombre_usuario: p.deuda.usuario?.nombre,
+                    cedula_usuario: p.deuda.cedula_usuario,
+                    monto: p.monto_pagado,
+                    metodo_pago: p.metodo_pago,
+                    fecha_pago: p.fecha_pago,
+                    concepto: p.deuda.gasto.concepto,
+                })),
+            por_pagar: pagos
+                .filter(
+                    (p) =>
+                        p.deuda.gasto.id_condominio === idCondominio &&
+                        !p.deuda.gasto.activo,
+                )
+                .map((p) => ({
+                    id: p.id,
+                    nombre_usuario: p.deuda.usuario?.nombre,
+                    cedula_usuario: p.deuda.cedula_usuario,
+                    monto: p.monto_pagado,
+                    metodo_pago: p.metodo_pago,
+                    fecha_pago: p.fecha_pago,
+                    concepto: p.deuda.gasto.concepto,
+                })),
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: "Error al obtener los pagos del condominio",
+        });
+    }
+});
+
+/**
  * GET /api/condominio/:id/reportes
  * Busca los reportes asociados a un condominio por id
  */
