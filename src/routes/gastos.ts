@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { getMonitor } from "consulta-dolar-venezuela";
 
+// Esquema de validacion de gastos
 const gastoSchema = z.object({
     id_condominio: z
         .number()
@@ -22,6 +23,12 @@ const dolarBcv = getMonitor("bcv", "price");
 export const gastosRouter = Router();
 const prisma = new PrismaClient();
 
+/**
+ * POST /api/gastos
+ *
+ *
+ *
+ */
 gastosRouter.post("/", async (req, res) => {
     try {
         // Convierte el monto de string a numero
