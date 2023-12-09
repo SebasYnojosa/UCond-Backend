@@ -47,6 +47,7 @@ model Condominio {
   gastos               Gasto[]
   foros                Foro[]
   cosas_comunes        CosaComun[]
+  anuncios             Anuncio[]
 }
 
 model Vivienda {
@@ -148,4 +149,13 @@ model CosaComun {
   id_condominio Int        @unique
   nombre        String
   es_de_todos   Boolean
+}
+
+model Anuncio {
+  id            Int        @id @default(autoincrement())
+  asunto        String
+  descripcion   String
+  fecha         DateTime
+  id_condominio Int
+  condominio    Condominio @relation(fields: [id_condominio], references: [id])
 }
