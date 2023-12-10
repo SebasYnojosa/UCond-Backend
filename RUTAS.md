@@ -100,7 +100,9 @@
 -   `GET /api/usuarios/:userId/deudas?idCondominio=<idCondominio>`
 -   devuelve: `{deudas}`
 
-### Alicuota de cada usuario de un condominio
+### Alicuota y dimension de las viviendas de un usuario de un condominio
+-   `GET /api/condominio/:condominioId/:userId/alicuotas`
+-   devuelve: `{alicuotasYdimension}`
 
 ### Historial de pagos de un usuario por su ID
 
