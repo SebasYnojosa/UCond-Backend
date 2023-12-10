@@ -35,6 +35,15 @@ const condominioSchema = z.object({
         )
         .min(1, "Debe haber al menos una vivienda")
         .optional(),
+    metodos_pago: z
+        .array(
+            z
+                .string()
+                .trim()
+                .min(1, "El método de pago no puede estar vacío")
+                .max(255),
+        )
+        .optional(),
     url_pagina_actuarial: z.string().url().trim(),
 });
 
@@ -104,7 +113,7 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
             ...req.body,
             url_pagina_actuarial: url_pagina_actuarial,
         });
-        const { viviendas, ...datosCondominio } = condominio;
+        const { viviendas, metodos_pago, ...datosCondominio } = condominio;
         // Calcular alícuotas
         const dimensionTotal = viviendas?.reduce(
             (acc, vivienda) => acc + vivienda.dimension,
@@ -118,6 +127,8 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
                       : 0,
               }))
             : [];
+        // Typescript dejame quieto
+        const metodos_pago_defined = metodos_pago ?? [];
         const nuevoCondominio = await prisma.condominio.create({
             data: {
                 ...datosCondominio,
@@ -125,6 +136,9 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
                 reserva: 0,
                 viviendas: {
                     create: [...viviendas_con_alicuotas],
+                },
+                metodos_pago: {
+                    create: [...metodos_pago_defined.map((m) => ({ tipo: m }))],
                 },
             },
         });
