@@ -65,13 +65,25 @@
 
 ## Gastos
 
-### Crear gasto
-
--   devuelve: `{gasto: *nuevo gasto*}`
-
 ### Precio dolar
 
+-   `GET /api/gastos/dolarprecio`
 -   Implementado en gastos
+
+## Reportes
+
+### Crear un reporte
+
+-   `POST /api/reportes`
+-   devuelve: `{reporte: asunto, contenido, fecha, activo, url_archivo}`
+-   Debe enviarse el id_condominio en el body
+
+### Obtener el archivo de un reporte
+
+-   `GET /api/reportes/:id/archivo`
+-   devuelve: archivo cargado en el reporte
+
+###
 
 ## Usuarios
 
@@ -101,6 +113,7 @@
 -   devuelve: `{deudas}`
 
 ### Alicuota y dimension de las viviendas de un usuario de un condominio
+
 -   `GET /api/condominio/:condominioId/:userId/alicuotas`
 -   devuelve: `{alicuotasYdimension}`
 

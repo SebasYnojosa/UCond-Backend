@@ -118,9 +118,11 @@ model Reporte {
   id_condominio Int        @unique
   usuario       User       @relation(fields: [id_usuario], references: [id])
   id_usuario    Int        @unique
+  asunto        String
   contenido     String
   fecha         DateTime   @default(now())
-  estado        String     
+  activo        Boolean    @default(true)
+  url_archivo   String?
 }
 
 model Foro {
