@@ -320,6 +320,36 @@ condominioRouter.get("/:id/inquilinos", async (req, res) => {
 });
 
 /**
+ * GET /api/condominio/:condominioId/:userId/alicuotas
+ * Busca las alicuotas de un usuario en un condominio
+ */
+condominioRouter.get("/:condominioId/:userId/alicuotas", async (req, res) => {
+    try {
+        const idCondominio = parseInt(req.params.condominioId); // Obtener el ID de los parámetros de la URL
+        const idUsuario = parseInt(req.params.userId); // Obtener el ID de los parámetros de la URL
+        // Buscar viviendas asociadas al condominio
+        const viviendas_condominio = await prisma.vivienda.findMany({
+            where: { id_condominio: idCondominio, id_propietario: idUsuario },
+        });
+        // Filtrar propietarios únicos de las viviendas obtenidas
+        if (viviendas_condominio.length === 0) {
+            return res
+                .status(404)
+                .json({ error: "Usuario sin viviendas en el condominio" });
+        }
+        const alicuotas = viviendas_condominio.map((vivienda) => ({
+            id: vivienda.id,
+            nombre: vivienda.nombre,
+            alicuota: vivienda.alicuota,
+            dimension: vivienda.dimension,
+        }));
+        res.json({ alicuotas });
+    } catch (error) {
+        res.status(500).json({ error: "Error al obtener las alicuotas" });
+    }
+});
+
+/**
  * GET /api/condominio/:id/gastos
  * Busca los gastos asociados a un condominio por id
  */
