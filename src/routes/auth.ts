@@ -88,7 +88,7 @@ authRouter.post("/sign-up", async (req, res) => {
 
         // Iniciar sesión de usuario
         const token = jwt.sign(user, process.env.JWT_SECRET as jwt.Secret);
-        res.json({ token });
+        res.json({ userId: user.id, token });
     } catch (error) {
         // Error de validación
         if (error instanceof z.ZodError) {
@@ -118,7 +118,6 @@ authRouter.post("/log-in", async (req, res) => {
     try {
         //Obtener y validar cuerpo de la petición
         const parsedUser = correoPasswordSchema.parse(req.body);
-        console.log("parce", parsedUser.correo);
 
         //Buscar usuario en base de datos
         const userBD = await prisma.user.findUniqueOrThrow({
@@ -138,7 +137,7 @@ authRouter.post("/log-in", async (req, res) => {
                 usuario_sin_password,
                 process.env.JWT_SECRET as jwt.Secret,
             );
-            res.json({ token });
+            res.json({ userId: usuario_sin_password.id, token });
         } else {
             return res.status(401).json({ error: "Contraseña inválida" });
         }

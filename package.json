@@ -7,7 +7,6 @@
 		"tsc": "npm install && tsc",
 		"build": "npm install && tsc",
 		"start": "tsc && node --es-module-specifier-resolution=node build/src/index.js",
-		"build": "tsc",
 		"dev": "tsx src/index.ts"
 	},
 	"devDependencies": {
