@@ -91,6 +91,7 @@ authRouter.post("/sign-up", async (req, res) => {
         res.json({ userId: user.id, token });
     } catch (error) {
         // Error de validación
+        console.error(error);
         if (error instanceof z.ZodError) {
             return res
                 .status(400)
@@ -101,7 +102,7 @@ authRouter.post("/sign-up", async (req, res) => {
             error instanceof PrismaClientKnownRequestError &&
             error.code === "P2002"
         ) {
-            return res.status(400).json({ error: "El correo ya está en uso" });
+            return res.status(400).json({ error: "El correo o cedula ya está en uso" });
         }
         // Otros errores
         res.status(500).json(error);
