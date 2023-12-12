@@ -498,20 +498,20 @@ condominioRouter.get("/:id/reportes", async (req, res) => {
  * GET /api/condominio/:id/anuncios
  * Busca los anuncios asociados a un condominio por id
  */
-// condominioRouter.get("/:id/anuncios", async (req, res) => {
-//     try {
-//         const idCondominio = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
-//         // Buscar anuncios asociados al condominio
-//         const anuncios = await prisma.anuncio.findMany({
-//             where: { id_condominio: idCondominio },
-//             orderBy: { fecha_creacion: 'desc' }, // Ordenar los anuncios por fecha de creación en orden descendente
-//         });
-//         res.json({
-//             anuncios
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             error: "Error al obtener los anuncios del condominio",
-//         });
-//     }
-// });
+condominioRouter.get("/:id/anuncios", async (req, res) => {
+    try {
+        const idCondominio = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
+        // Buscar anuncios asociados al condominio
+        const anuncios = await prisma.anuncio.findMany({
+            where: { id_condominio: idCondominio },
+            orderBy: { fecha_creacion: 'desc' }, // Ordenar los anuncios por fecha de creación en orden descendente
+        });
+        res.json({
+            anuncios,
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: "Error al obtener los anuncios del condominio",
+        });
+    }
+});
