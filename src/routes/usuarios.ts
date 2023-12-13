@@ -126,8 +126,22 @@ usuariosRouter.put("/:id", async (req, res) => {
 usuariosRouter.get("/:userId/condominios", async (req, res) => {
     try {
         const userId = parseInt(req.params.userId); // Obtener el ID de los parámetros de la URL
+        // Obtener cédula de usuario
+        const cedula = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { cedula: true },
+        });
+        if (!cedula) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+        // Hallar todas las viviendas del usuario
         const viviendas_usuario = await prisma.vivienda.findMany({
-            where: { id_propietario: userId },
+            where: {
+                OR: [
+                    { id_propietario: userId },
+                    { cedula_propietario: cedula.cedula },
+                ],
+            },
             include: { condominio: true },
         });
         // Filtrar todos los condominios únicos de las viviendas del usuario
@@ -137,7 +151,11 @@ usuariosRouter.get("/:userId/condominios", async (req, res) => {
                 (condominio, index, self) =>
                     self.findIndex((c) => c.id === condominio.id) === index,
             );
-        res.json({ condominios });
+        // Condominios de los que es administrador
+        const condominios_admin = await prisma.condominio.findMany({
+            where: { id_administrador: userId },
+        });
+        res.json({ condominios: [...condominios, ...condominios_admin] });
     } catch (error) {
         res.status(500).json({
             error: "Error al buscar los condominios del usuario",
