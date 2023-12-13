@@ -44,7 +44,7 @@ const condominioSchema = z.object({
                 .max(255),
         )
         .optional(),
-    url_pagina_actuarial: z.string().url().trim(),
+    url_pagina_actuarial: z.string().trim() // Luego se pondra URL
 });
 
 //Esquema de validacion para actualizar condominios
@@ -102,12 +102,7 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
         }
 
         //Crear url para el pdf
-        const url_pagina_actuarial =
-            req.protocol +
-            "://" +
-            req.get("host") +
-            "/paginas/" +
-            (req.file ? req.file.filename : "");
+        const url_pagina_actuarial = "PaginaActuarial.pdf" // TODO: Cambiar por URL
         //Parsear condominio
         const condominio = condominioSchema.parse({
             ...req.body,

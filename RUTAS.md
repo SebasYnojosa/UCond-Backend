@@ -16,12 +16,12 @@
 
 ### Registar condominio
 
--   `POST /api/condominios/`
+-   `POST /api/condominio/`
 -   Devuelve: `{condominio: *nuevo condominio*}`
 
 ### Guardar comprobante
 
--   `POST /api/condominios/:id/comprobante`
+-   `POST /api/condominio/:id/comprobante`
 -   Devuelve: `{condominio}`
 
 ### Eliminar condominio por su id
