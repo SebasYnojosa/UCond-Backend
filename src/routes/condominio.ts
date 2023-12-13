@@ -56,7 +56,7 @@ const updatedCondominioSchema = z.object({
             message: "Se debe especificar un id de administrador válido",
         }),
 
-    url_pagina_actuarial: z.string().url().trim().optional(),
+    url_pagina_actuarial: z.string().trim().optional()
 });
 
 // Esquema de validación para el gasto
@@ -250,12 +250,7 @@ condominioRouter.put("/:id", paginas_upload.single("pdf"), async (req, res) => {
         }
 
         //Crear url para el pdf
-        const url_pagina_actuarial =
-            req.protocol +
-            "://" +
-            req.get("host") +
-            "/uploads/" +
-            (req.file ? req.file.filename : "");
+        const url_pagina_actuarial = "PaginaActuarial.pdf" // TODO: Cambiar por URL
         const updatedCondominio = updatedCondominioSchema.parse({
             ...req.body,
             url_pagina_actuarial: url_pagina_actuarial,
