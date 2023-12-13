@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
-import multer from "multer";
+// import multer from "multer";
 import { z } from "zod";
 
 //Esquema de validacion para condominios
@@ -44,7 +44,7 @@ const condominioSchema = z.object({
                 .max(255),
         )
         .optional(),
-    url_pagina_actuarial: z.string().url().trim(),
+    url_pagina_actuarial: z.string().trim() // Luego se pondra URL
 });
 
 //Esquema de validacion para actualizar condominios
@@ -56,7 +56,7 @@ const updatedCondominioSchema = z.object({
             message: "Se debe especificar un id de administrador válido",
         }),
 
-    url_pagina_actuarial: z.string().url().trim().optional(),
+    url_pagina_actuarial: z.string().trim().optional()
 });
 
 // Esquema de validación para el gasto
@@ -71,8 +71,8 @@ const gastoSchema = z.object({
     tipo: z.string().trim().min(1, "El tipo de gasto no puede estar vacío"),
 });
 
-const paginas_upload = multer({ dest: "paginas/" });
-const comprobantes_upload = multer({ dest: "comprobantes_registro/" });
+// const paginas_upload = multer({ dest: "paginas/" });
+// const comprobantes_upload = multer({ dest: "comprobantes_registro/" });
 
 export const condominioRouter = Router();
 const prisma = new PrismaClient();
@@ -82,7 +82,7 @@ const prisma = new PrismaClient();
  * Crea un nuevo condominio
  * El objeto de condominio se recibe en req.body
  */
-condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
+condominioRouter.post("/", async (req, res) => {
     try {
         //Verificar que el archivo sea pdf
         if (req.file && req.file.mimetype !== "application/pdf") {
@@ -102,12 +102,7 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
         }
 
         //Crear url para el pdf
-        const url_pagina_actuarial =
-            req.protocol +
-            "://" +
-            req.get("host") +
-            "/paginas/" +
-            (req.file ? req.file.filename : "");
+        const url_pagina_actuarial = "PaginaActuarial.pdf" // TODO: Cambiar por URL
         //Parsear condominio
         const condominio = condominioSchema.parse({
             ...req.body,
@@ -162,7 +157,7 @@ condominioRouter.post("/", paginas_upload.single("pdf"), async (req, res) => {
  */
 condominioRouter.post(
     "/:idCondominio/comprobante",
-    comprobantes_upload.single("comprobante"),
+    // comprobantes_upload.single("comprobante"),
     async (req, res) => {
         try {
             // Verificar tipo de comprobante
@@ -225,7 +220,7 @@ condominioRouter.delete("/:id", async (req, res) => {
  * Actualiza un condominio por su id
  * TODO: Autenticar que el usuario sea el administrador del condominio
  */
-condominioRouter.put("/:id", paginas_upload.single("pdf"), async (req, res) => {
+condominioRouter.put("/:id", async (req, res) => {
     try {
         //Verificar que el archivo sea pdf
         if (req.file && req.file.mimetype !== "application/pdf") {
@@ -255,12 +250,7 @@ condominioRouter.put("/:id", paginas_upload.single("pdf"), async (req, res) => {
         }
 
         //Crear url para el pdf
-        const url_pagina_actuarial =
-            req.protocol +
-            "://" +
-            req.get("host") +
-            "/uploads/" +
-            (req.file ? req.file.filename : "");
+        const url_pagina_actuarial = "PaginaActuarial.pdf" // TODO: Cambiar por URL
         const updatedCondominio = updatedCondominioSchema.parse({
             ...req.body,
             url_pagina_actuarial: url_pagina_actuarial,
