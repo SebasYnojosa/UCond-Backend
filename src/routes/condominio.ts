@@ -504,7 +504,7 @@ condominioRouter.get("/:id/anuncios", async (req, res) => {
         // Buscar anuncios asociados al condominio
         const anuncios = await prisma.anuncio.findMany({
             where: { id_condominio: idCondominio },
-            orderBy: { fecha_creacion: 'desc' }, // Ordenar los anuncios por fecha de creación en orden descendente
+            orderBy: { fecha: "desc" }, // Ordenar los anuncios por fecha de creación en orden descendente
         });
         res.json({
             anuncios,
