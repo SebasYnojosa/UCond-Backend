@@ -280,7 +280,7 @@ usuariosRouter.get("/:userId/pagos", async (req, res) => {
  */
 usuariosRouter.post(
     "/:userId/pagos",
-    comprobantes_usuario_upload.single("comprobante"),
+    //comprobantes_usuario_upload.single("comprobante"),
     async (req, res) => {
         try {
             //Verificar que el archivo sea pdf
@@ -301,12 +301,7 @@ usuariosRouter.post(
             }
 
             //Crear url para el pdf
-            const url_comprobante =
-                req.protocol +
-                "://" +
-                req.get("host") +
-                "/comprobantes_usuario/" +
-                (req.file ? req.file.filename : "");
+            const url_comprobante = "Comprobante.pdf";
             //Parsear pago
             const pago = pagoSchema.parse({
                 ...req.body,
