@@ -7,7 +7,6 @@ import {
     metodosPagoSchema,
     viviendaSchema,
 } from "../schemas/condominio";
-import { gastoSchema } from "../schemas/gasto";
 
 // Para subir archivos
 const paginas_upload = multer({
@@ -321,43 +320,6 @@ condominioRouter.get("/:id/gastos", async (req, res) => {
         res.status(500).json({
             error: "Error al obtener los gastos del condominio",
         });
-    }
-});
-
-/**
- * POST /api/condominio/:id/gastos
- * Registra un gasto en el condominio
- */
-condominioRouter.post("/:id/gastos", async (req, res) => {
-    try {
-        const reqGasto = gastoSchema.parse(req.body);
-        const idCondominio = parseInt(req.params.id);
-        // Obtener viviendas
-        const viviendas = await prisma.vivienda.findMany({
-            where: { id_condominio: idCondominio },
-        });
-        if (!viviendas.length) {
-            return res.status(404).json({ error: "Condominio no encontrado" });
-        }
-        // Crear gasto con deudas asignadas
-        const deudas = viviendas.map((v) => ({
-            id_usuario: v.id_propietario,
-            cedula_usuario: v.cedula_propietario,
-            monto_usuario: reqGasto.monto * v.alicuota,
-        }));
-        const gasto = await prisma.gasto.create({
-            data: {
-                id_condominio: parseInt(req.params.id),
-                ...reqGasto,
-                deudas: {
-                    create: [...deudas],
-                },
-            },
-        });
-        // Devolver gasto
-        res.json({ gasto });
-    } catch (error) {
-        res.status(500).json({ error: "Error creando condominio" });
     }
 });
 

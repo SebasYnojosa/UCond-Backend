@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Esquema de validación para el gasto
 export const gastoSchema = z.object({
-    idCondominio: z.number().int().min(1, "El id debe ser positivo"),
+    id_condominio: z.number().int().min(1, "El id debe ser positivo"),
     monto: z.number().min(1, "El monto no puede ser negativo"),
     concepto: z
         .string()

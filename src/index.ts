@@ -7,7 +7,7 @@ dotenv.config();
 
 // Rutas
 import { authRouter } from "./routes/auth";
-import { condominioRouter } from "./routes/condominio";
+import { condominioRouter } from "./routes/condominios";
 import { usuariosRouter } from "./routes/usuarios";
 import { authProtected } from "../utils/auth";
 import { gastosRouter } from "./routes/gastos";
