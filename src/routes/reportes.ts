@@ -2,41 +2,36 @@ import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import multer from "multer";
+import { reporteSchema } from "../schemas/reporte";
 
-// Esquema de validacion de reportes
-const reporteSchema = z.object({
-    id_condominio: z
-        .number()
-        .min(1, "Se debe especificar la id del condominio"),
-    id_usuario: z.number().min(1, "Se debe especificar la id del usuario"),
-    asunto: z.string().min(1, "El reporte debe tener un asunto").max(255),
-    contenido: z.string().min(1, "El reporte debe tener contenido"),
-    url_archivo: z.string().url().optional(),
+// Para cargar archivos
+const reportes_upload = multer({
+    storage: multer.diskStorage({
+        destination: "public/reportes",
+        filename: (_req, file, cb) => {
+            const prefijo = Date.now() + "-" + Math.round(Math.random() * 1e9);
+            cb(null, prefijo + "-" + file.originalname);
+        },
+    }),
 });
-
-const reportes_upload = multer({ dest: "reportes/" });
 
 export const reportesRouter = Router();
 const prisma = new PrismaClient();
 
 /**
- * GET /api/reportes/:id/archivo
- * Devuelve el archivo del reporte
+ * GET /api/reportes/:id
+ * Devuelve el reporte de id :id
  */
-reportesRouter.get("/:id/archivo", async (req, res) => {
+reportesRouter.get("/:id", async (req, res) => {
     try {
         const reporte = await prisma.reporte.findUnique({
             where: { id: Number(req.params.id) },
         });
         if (!reporte)
             return res.status(404).json({ error: "El reporte no existe" });
-        if (!reporte.url_archivo)
-            return res
-                .status(404)
-                .json({ error: "El reporte no tiene archivo" });
-        res.sendFile(reporte.url_archivo);
+        res.json({ reporte });
     } catch (error) {
-        res.status(500).json({ error: "Error al obtener el archivo" });
+        res.status(500).json({ error });
         console.log(error);
     }
 });
@@ -68,21 +63,12 @@ reportesRouter.post(
             if (!user)
                 return res.status(404).json({ error: "El usuario no existe" });
 
-            // Crea la URL de reporte
-            const url_archivo = req.file
-                ? req.protocol +
-                  "://" +
-                  req.get("host") +
-                  "/paginas/" +
-                  req.file.filename
-                : null;
-            const reporte = reporteSchema.parse({ ...req.body, url_archivo });
-
             // Crea el reporte
             const nuevoReporte = await prisma.reporte.create({
-                data: {
-                    ...reporte,
-                },
+                data: reporteSchema.parse({
+                    ...req.body,
+                    url_archivo: req.file?.path,
+                }),
             });
             res.json({ reporte: nuevoReporte });
         } catch (error) {
