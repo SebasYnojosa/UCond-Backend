@@ -2,7 +2,6 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
-import multer from "multer";
 
 const usuariosRouter = Router();
 const prisma = new PrismaClient();
@@ -23,7 +22,7 @@ const pagoSchema = z.object({
     notas: z.string().trim().max(255).optional(),
 });
 
-const comprobantes_usuario_upload = multer({ dest: "comprobantes_usuario/" });
+//const comprobantes_usuario_upload = multer({ dest: "comprobantes_usuario/" });
 
 // Esquema de validación de usuario en peticiones
 const updateUserSchema = z.object({

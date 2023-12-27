@@ -2,11 +2,10 @@
 	"name": "ucond-backend",
 	"version": "1.0.0",
 	"description": "Backend para el proyecto UCond de la materia Ingenieria de Software",
-	"main": "index.js",
 	"scripts": {
-		"tsc": "npm install && tsc",
-		"build": "npm install && npx prisma generate && tsc",
-		"start": "tsc && node --es-module-specifier-resolution=node build/src/index.js",
+		"build": "npx prisma generate && tsc",
+		"start": "node build/src/index.js",
+		"tsc": "tsc",
 		"dev": "tsx src/index.ts"
 	},
 	"devDependencies": {
