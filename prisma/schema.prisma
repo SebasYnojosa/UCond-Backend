@@ -40,7 +40,7 @@ model Condominio {
   tipo                 String
   direccion            String
   url_pagina_actuarial String
-  reserva              Float         @db.DoublePrecision
+  reserva              Float         @default(0) @db.DoublePrecision
   estado_pago          Boolean       @default(false)
   fecha_pago           DateTime      @default(now())
   reportes             Reporte[]

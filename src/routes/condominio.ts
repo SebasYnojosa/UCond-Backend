@@ -2,7 +2,12 @@ import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import multer from "multer";
 import { z } from "zod";
-import { condominioSchema } from "../schemas/condominio";
+import {
+    condominioSchema,
+    metodosPagoSchema,
+    viviendaSchema,
+} from "../schemas/condominio";
+import { gastoSchema } from "../schemas/gasto";
 
 // Para subir archivos
 const paginas_upload = multer({
@@ -53,43 +58,17 @@ condominioRouter.post(
                     .json({ error: "El id de administrador no existe" });
             }
 
-            //Parsear condominio
-            const condominio = condominioSchema.parse({
+            // Crear condominio
+            const datosCondominio = condominioSchema.parse({
                 ...req.body,
                 url_pagina_actuarial: req.file.path,
             });
-            const { viviendas, metodos_pago, ...datosCondominio } = condominio;
-            // Calcular alícuotas
-            const dimensionTotal = viviendas?.reduce(
-                (acc, vivienda) => acc + vivienda.dimension,
-                0,
-            );
-            const viviendas_con_alicuotas = viviendas
-                ? viviendas.map((vivienda) => ({
-                      ...vivienda,
-                      alicuota: dimensionTotal
-                          ? vivienda.dimension / dimensionTotal
-                          : 0,
-                  }))
-                : [];
-            // Typescript dejame quieto
-            const metodos_pago_defined = metodos_pago ?? [];
             const nuevoCondominio = await prisma.condominio.create({
                 data: {
                     ...datosCondominio,
-                    // Inicializar la reserva en 0
-                    reserva: 0,
-                    viviendas: {
-                        create: [...viviendas_con_alicuotas],
-                    },
-                    metodos_pago: {
-                        create: [
-                            ...metodos_pago_defined.map((m) => ({ tipo: m })),
-                        ],
-                    },
+                    url_pagina_actuarial: req.file.path,
                 },
             });
-            //Registrar cada vivienda en la base de datos
             res.json({ condominio: nuevoCondominio });
         } catch (error) {
             //Error de validacion
@@ -103,6 +82,75 @@ condominioRouter.post(
         }
     },
 );
+
+/**
+ * POST /api/condominios/:id/viviendas
+ * Agrega viviendas a un condominio
+ */
+condominioRouter.post("/:id/viviendas", async (req, res) => {
+    try {
+        // Parsear el id_condominio a numero
+        const idCondominio = Number(req.params.id);
+        // Parsear las viviendas
+        const viviendas = viviendaSchema.parse(req.body);
+        // Calcular alícuotas
+        const dimensionTotal = viviendas.reduce(
+            (acc, vivienda) => acc + vivienda.dimension,
+            0,
+        );
+        const viviendas_con_alicuotas = viviendas.map((vivienda) => ({
+            ...vivienda,
+            alicuota: dimensionTotal ? vivienda.dimension / dimensionTotal : 0,
+        }));
+        // Crear las viviendas
+        await prisma.vivienda.createMany({
+            data: viviendas_con_alicuotas.map((vivienda) => ({
+                ...vivienda,
+                id_condominio: idCondominio,
+            })),
+        });
+        res.status(200);
+    } catch (error) {
+        //Error de validacion
+        if (error instanceof z.ZodError) {
+            return res
+                .status(400)
+                .json({ error: "Datos inválidos", mensajes: error.issues });
+        }
+        res.status(500).json(error);
+        console.error(error);
+    }
+});
+
+/**
+ * POST /api/condominios/:id/metodos_pago
+ * Agrega métodos de pago a un condominio
+ */
+condominioRouter.post("/:id/metodos_pago", async (req, res) => {
+    try {
+        // Parsear el id_condominio a numero
+        const idCondominio = Number(req.params.id);
+        // Parsear los métodos de pago
+        const metodos_pago = metodosPagoSchema.parse(req.body);
+        // Crear los métodos de pago
+        await prisma.metodo_Pago.createMany({
+            data: metodos_pago.map((tipo) => ({
+                tipo,
+                id_condominio: idCondominio,
+            })),
+        });
+        res.status(200);
+    } catch (error) {
+        //Error de validacion
+        if (error instanceof z.ZodError) {
+            return res
+                .status(400)
+                .json({ error: "Datos inválidos", mensajes: error.issues });
+        }
+        res.status(500).json(error);
+        console.error(error);
+    }
+});
 
 /**
  * POST /api/condominios/:id/comprobante
@@ -164,66 +212,6 @@ condominioRouter.delete("/:id", async (req, res) => {
         res.json(condominio);
     } catch (error) {
         res.status(500).json({ error: "Error al eliminar el condominio" });
-        console.error(error);
-    }
-});
-
-/**
- * PUT /api/condominio/:id
- * Actualiza un condominio por su id
- * TODO: Autenticar que el usuario sea el administrador del condominio
- */
-condominioRouter.put("/:id", async (req, res) => {
-    try {
-        //Verificar que el archivo sea pdf
-        if (req.file && req.file.mimetype !== "application/pdf") {
-            return res.status(400).json({ error: "El archivo debe ser PDF" });
-        }
-        //parsear el id_administrador a numero
-        req.body.id_administrador = Number(req.body.id_administrador);
-
-        //Verificar que el id_administrador exista
-        const user = await prisma.user.findUnique({
-            where: { id: req.body.id_administrador },
-        });
-        if (!user) {
-            return res
-                .status(400)
-                .json({ error: "El id de administrador no existe" });
-        }
-        //parsear el id_condominio a numero
-        const id = Number(req.params.id);
-
-        //Verificar que el condominio exista
-        let condominio = await prisma.condominio.findUnique({
-            where: { id: id },
-        });
-        if (!condominio) {
-            return res.status(404).json({ error: "El condominio no existe" });
-        }
-
-        //Crear url para el pdf
-        const url_pagina_actuarial = "PaginaActuarial.pdf"; // TODO: Cambiar por URL
-        const updatedCondominio = updatedCondominioSchema.parse({
-            ...req.body,
-            url_pagina_actuarial: url_pagina_actuarial,
-        });
-        //Condominio actualizado
-        condominio = await prisma.condominio.update({
-            where: { id: id },
-            data: updatedCondominio,
-        });
-        res.json(condominio);
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({
-                error: "Datos para modificar inválidos",
-                mensajes: error.issues,
-            });
-        }
-        res.status(500).json({
-            error: "Error al actualizar el condominio",
-        });
         console.error(error);
     }
 });
