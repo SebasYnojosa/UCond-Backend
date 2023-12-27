@@ -12,14 +12,22 @@ import { gastoSchema } from "../schemas/gasto";
 // Para subir archivos
 const paginas_upload = multer({
     storage: multer.diskStorage({
-        destination: "pagina_actuarial/",
+        destination: "public/paginas_actuariales/",
         filename: (_req, file, cb) => {
             const sufijo = Date.now() + "-" + Math.round(Math.random() * 1e9);
             cb(null, file.fieldname + "-" + sufijo + ".pdf");
         },
     }),
 });
-const comprobantes_upload = multer({ dest: "comprobantes_registro/" });
+const comprobantes_plan_upload = multer({
+    storage: multer.diskStorage({
+        destination: "public/comprobantes_plan/",
+        filename: (_req, file, cb) => {
+            const prefijo = Date.now() + "-" + Math.round(Math.random() * 1e9);
+            cb(null, prefijo + file.originalname);
+        },
+    }),
+});
 
 export const condominioRouter = Router();
 const prisma = new PrismaClient();
@@ -150,17 +158,19 @@ condominioRouter.post("/:id/metodos_pago", async (req, res) => {
 
 /**
  * POST /api/condominios/:id/comprobante
- * Guarda un comprobante
+ * Guarda un comprobante de pago del plan del condominio
  */
 condominioRouter.post(
     "/:idCondominio/comprobante",
-    // comprobantes_upload.single("comprobante"),
+    comprobantes_plan_upload.single("comprobante"),
     async (req, res) => {
         try {
-            // Verificar tipo de comprobante
+            // Verificar archivo
+            if (!req.file) {
+                return res.status(400).json({ error: "No se envió archivo" });
+            }
             if (
-                req.file &&
-                ["image/jpeg", "application/pdf"].includes(req.file.mimetype)
+                !["image/jpeg", "application/pdf"].includes(req.file.mimetype)
             ) {
                 return res
                     .status(400)
@@ -174,13 +184,15 @@ condominioRouter.post(
                     estado_pago: true,
                 },
             });
-            return condominio;
+            res.json({ condominio });
         } catch (error) {
             if (error instanceof z.ZodError) {
                 return res
                     .status(400)
                     .json({ error: "Datos inválidos", mensajes: error.issues });
             }
+            console.error(error);
+            res.status(500).json({ error });
         }
     },
 );
