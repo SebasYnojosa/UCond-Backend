@@ -27,7 +27,6 @@ model User {
   secretario       Junta[]      @relation("secretario")
   reportes         Reporte[]
   deudas           Deuda[]
-  mensajes         Mensaje[]
 }
 
 model Condominio {
@@ -41,11 +40,10 @@ model Condominio {
   direccion            String
   url_pagina_actuarial String
   reserva              Float         @default(0) @db.DoublePrecision
-  estado_pago          Boolean       @default(false)
+  estado_pago          Boolean       @default(true)
   fecha_pago           DateTime      @default(now())
   reportes             Reporte[]
   gastos               Gasto[]
-  foros                Foro[]
   cosas_comunes        CosaComun[]
   anuncios             Anuncio[]
   metodos_pago         Metodo_Pago[]
@@ -131,26 +129,6 @@ model Reporte {
   fecha         DateTime   @default(now())
   activo        Boolean    @default(true)
   url_archivo   String?
-}
-
-model Foro {
-  id             Int        @id @default(autoincrement())
-  condominio     Condominio @relation(fields: [id_condominio], references: [id])
-  id_condominio  Int        @unique
-  titulo         String
-  fecha_creacion DateTime   @default(now())
-  abierto        Boolean    @default(true)
-  mensajes       Mensaje[]
-}
-
-model Mensaje {
-  id          Int      @id @default(autoincrement())
-  foro        Foro     @relation(fields: [id_foro], references: [id])
-  id_foro     Int      @unique
-  usuario     User     @relation(fields: [id_usuario], references: [id])
-  id_usuario  Int      @unique
-  contenido   String
-  fecha_envio DateTime @default(now())
 }
 
 model CosaComun {

@@ -59,15 +59,11 @@ condominioRouter.post(
             }
 
             // Crear condominio
-            const datosCondominio = condominioSchema.parse({
-                ...req.body,
-                url_pagina_actuarial: req.file.path,
-            });
             const nuevoCondominio = await prisma.condominio.create({
-                data: {
-                    ...datosCondominio,
+                data: condominioSchema.parse({
+                    ...req.body,
                     url_pagina_actuarial: req.file.path,
-                },
+                }),
             });
             res.json({ condominio: nuevoCondominio });
         } catch (error) {
