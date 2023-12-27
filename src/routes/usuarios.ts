@@ -2,56 +2,22 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { updateUserSchema } from "../schemas/user";
+import { pagoSchema } from "../schemas/pago";
+import multer from "multer";
 
-const usuariosRouter = Router();
+export const usuariosRouter = Router();
 const prisma = new PrismaClient();
 
-// Esquema de validación de un pago nuevo
-const pagoSchema = z.object({
-    id_usuario: z.number().int().min(1, "El id de usuario debe ser positivo"),
-    id_deuda: z.number().int().min(1, "El id de deuda debe ser positivo"),
-    monto_pagado: z
-        .number()
-        .min(1, "El monto pagado debe ser mayor o igual a 1"),
-    metodo_pago: z
-        .string()
-        .trim()
-        .min(1, "El metodo de pago no puede estar vacio")
-        .max(255),
-    url_comprobante: z.string().trim().max(255),
-    notas: z.string().trim().max(255).optional(),
-});
-
-//const comprobantes_usuario_upload = multer({ dest: "comprobantes_usuario/" });
-
-// Esquema de validación de usuario en peticiones
-const updateUserSchema = z.object({
-    nombre: z
-        .string()
-        .trim()
-        .min(1, "El nombre no puede estar vacío")
-        .max(255)
-        .optional(),
-    apellido: z
-        .string()
-        .trim()
-        .min(1, "El apellido no puede estar vacío")
-        .max(255)
-        .optional(),
-    fecha_nacimiento: z.coerce.date().optional(),
-    correo: z
-        .string()
-        .trim()
-        .email("El correo debe ser válido")
-        .min(1, "El correo no puede estar vacío")
-        .max(255)
-        .optional(),
-    telefono: z
-        .string()
-        .trim()
-        .min(1, "El número de teléfono no puede estar vacío")
-        .max(255)
-        .optional(),
+// Para cargar comprobantes de pago
+const comprobantes_pago_upload = multer({
+    storage: multer.diskStorage({
+        destination: "public/comprobantes_pago/",
+        filename: (_req, file, cb) => {
+            const prefijo = Date.now() + "-" + Math.round(Math.random() * 1e9);
+            cb(null, prefijo + "-" + file.originalname);
+        },
+    }),
 });
 
 /**
@@ -279,33 +245,37 @@ usuariosRouter.get("/:userId/pagos", async (req, res) => {
  */
 usuariosRouter.post(
     "/:userId/pagos",
-    //comprobantes_usuario_upload.single("comprobante"),
+    comprobantes_pago_upload.single("comprobante"),
     async (req, res) => {
         try {
-            //Verificar que el archivo sea pdf
-            if (req.file && req.file.mimetype !== "image/jpeg") {
+            // Verificar archivo
+            if (!req.file) {
                 return res
                     .status(400)
-                    .json({ error: "El archivo debe ser de imagen" });
+                    .json({ error: "Debe enviar un archivo" });
             }
-            //Parsear el id_usuario a número
-            req.body.id_usuario = Number(req.body.id_usuario);
+            if (
+                !["image/jpeg", "application/pdf"].includes(req.file.mimetype)
+            ) {
+                return res
+                    .status(400)
+                    .json({ error: "El archivo debe ser de imagen o PDF" });
+            }
 
             //Verificar que el id_usuario exista
             const user = await prisma.user.findUnique({
-                where: { id: req.body.id_usuario },
+                where: { id: Number(req.body.id_usuario) },
             });
             if (!user) {
                 return res.status(400).json({ error: "El usuario no existe" });
             }
 
-            //Crear url para el pdf
-            const url_comprobante = "Comprobante.pdf";
             //Parsear pago
             const pago = pagoSchema.parse({
                 ...req.body,
-                url_comprobante,
+                url_comprobante: req.file.path,
             });
+
             // Obtener informacion de deuda
             const deuda = await prisma.deuda.findUnique({
                 where: { id: pago.id_deuda },
@@ -314,6 +284,7 @@ usuariosRouter.post(
             if (!deuda) {
                 return res.status(404).json({ error: "Deuda no encontrada" });
             }
+
             // Registrar pago
             const [pagoCreado, _deudaActualizada, _gastoActualizado] =
                 await prisma.$transaction([
@@ -352,5 +323,3 @@ usuariosRouter.post(
         }
     },
 );
-
-export { usuariosRouter };
