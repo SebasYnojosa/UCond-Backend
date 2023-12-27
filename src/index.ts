@@ -1,9 +1,7 @@
 import express from "express";
-
-// Ayuda a cargar las variables
-// de entorno correctamente ya que daba error en los get
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
 
 dotenv.config();
 
@@ -19,6 +17,13 @@ import { reportesRouter } from "./routes/reportes";
 const app = express();
 app.use(express.json());
 app.use(cors());
+if (__dirname.endsWith("build/src") || __dirname.endsWith("build\\src")) {
+    // PROD
+    app.use("/public", express.static(path.join(__dirname, "../../public")));
+} else {
+    // DEV
+    app.use("/public", express.static(path.join(__dirname, "../public")));
+}
 const PORT = Number(process.env.PORT) || 3000;
 
 // Registrar rutas
