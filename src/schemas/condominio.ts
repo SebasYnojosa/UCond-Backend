@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Para la creación del condominio
 export const condominioSchema = z.object({
-    id_administrador: z
+    id_administrador: z.coerce
         .number()
         .int()
         .min(1, "Se debe especificar un id de administrador válido"),
