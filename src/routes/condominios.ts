@@ -112,7 +112,7 @@ condominioRouter.post("/:id/viviendas", async (req, res) => {
                 id_condominio: idCondominio,
             })),
         });
-        res.status(200);
+        res.sendStatus(200);
     } catch (error) {
         //Error de validacion
         if (error instanceof z.ZodError) {
@@ -142,7 +142,7 @@ condominioRouter.post("/:id/metodos_pago", async (req, res) => {
                 id_condominio: idCondominio,
             })),
         });
-        res.status(200);
+        res.sendStatus(200);
     } catch (error) {
         //Error de validacion
         if (error instanceof z.ZodError) {
