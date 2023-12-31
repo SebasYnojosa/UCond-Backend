@@ -95,7 +95,7 @@ condominioRouter.post("/:id/viviendas", async (req, res) => {
         // Parsear el id_condominio a numero
         const idCondominio = Number(req.params.id);
         // Parsear las viviendas
-        const viviendas = viviendaSchema.parse(req.body);
+        const viviendas = viviendaSchema.parse(req.body.viviendas);
         // Calcular alícuotas
         const dimensionTotal = viviendas.reduce(
             (acc, vivienda) => acc + vivienda.dimension,
@@ -112,7 +112,7 @@ condominioRouter.post("/:id/viviendas", async (req, res) => {
                 id_condominio: idCondominio,
             })),
         });
-        res.status(200);
+        res.sendStatus(200);
     } catch (error) {
         //Error de validacion
         if (error instanceof z.ZodError) {
@@ -134,7 +134,7 @@ condominioRouter.post("/:id/metodos_pago", async (req, res) => {
         // Parsear el id_condominio a numero
         const idCondominio = Number(req.params.id);
         // Parsear los métodos de pago
-        const metodos_pago = metodosPagoSchema.parse(req.body);
+        const metodos_pago = metodosPagoSchema.parse(req.body.metodos_pago);
         // Crear los métodos de pago
         await prisma.metodo_Pago.createMany({
             data: metodos_pago.map((tipo) => ({
@@ -142,7 +142,7 @@ condominioRouter.post("/:id/metodos_pago", async (req, res) => {
                 id_condominio: idCondominio,
             })),
         });
-        res.status(200);
+        res.sendStatus(200);
     } catch (error) {
         //Error de validacion
         if (error instanceof z.ZodError) {
