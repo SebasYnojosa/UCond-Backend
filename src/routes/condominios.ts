@@ -258,14 +258,9 @@ condominioRouter.get("/:id/inquilinos", async (req, res) => {
             where: { id_condominio: idCondominio },
             include: { propietario: true },
         });
-        // Filtrar propietarios únicos de las viviendas obtenidas
-        const inquilinos = viviendas_condominio
-            .map((vivienda) => vivienda.propietario)
-            .filter(
-                (propietario, index, self) =>
-                    self.findIndex((p) => p?.id === propietario?.id) === index,
-            );
-        res.json({ inquilinos });
+        res.json({
+            viviendas: viviendas_condominio,
+        });
     } catch (error) {
         res.status(500).json({ error: "Error al obtener los inquilinos" });
     }
