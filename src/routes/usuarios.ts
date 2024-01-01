@@ -133,6 +133,78 @@ usuariosRouter.get("/:userId/condominios", async (req, res) => {
 });
 
 /**
+ * GET /api/usuarios/:userId/condosAdministrados
+ * Busca los condominios administrados por un usuario por su ID
+ */
+usuariosRouter.get("/:userId/condosAdministrados", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId); // Obtener el ID de los parámetros de la URL
+        // Hallar todos los condominios del usuario
+        const condominios = await prisma.condominio.findMany({
+            where: { id_administrador: userId },
+            select: {
+                id: true,
+                nombre: true,
+                url_pagina_actuarial: true,
+            },
+        });
+        res.json({ condominios });
+    } catch (error) {
+        res.status(500).json({
+            error,
+        });
+    }
+});
+
+/**
+ * GET /api/usuarios/:userId/viviendas
+ * Busca las viviendas de un usuario por su ID
+ */
+usuariosRouter.get("/:userId/viviendas", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId); // Obtener el ID de los parámetros de la URL
+        // Obtener cédula de usuario
+        const cedula = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { cedula: true },
+        });
+        if (!cedula) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+        // Buscar viviendas del usuario
+        const viviendas = await prisma.vivienda.findMany({
+            where: {
+                OR: [
+                    { id_propietario: userId },
+                    { cedula_propietario: cedula.cedula },
+                ],
+            },
+            include: {
+                condominio: {
+                    select: { id_administrador: true, nombre: true },
+                },
+            },
+        });
+        res.json({
+            viviendas: viviendas
+                .filter(
+                    (vivienda) =>
+                        vivienda.condominio.id_administrador !== userId,
+                )
+                .map((vivienda) => ({
+                    id: vivienda.id,
+                    nombre: vivienda.nombre,
+                    id_condominio: vivienda.id_condominio,
+                    nombre_condominio: vivienda.condominio.nombre,
+                })),
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error });
+    }
+});
+
+/**
  * GET /api/usuarios/:userId/deudas?idCondominio=<idCondominio>
  * Busca las deudas de un usuario por su ID
  */
