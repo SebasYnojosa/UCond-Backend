@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import multer from "multer";
 import { z } from "zod";
 import {
+    anuncioSchema,
     condominioSchema,
     metodosPagoSchema,
     viviendaSchema,
@@ -258,14 +259,9 @@ condominioRouter.get("/:id/inquilinos", async (req, res) => {
             where: { id_condominio: idCondominio },
             include: { propietario: true },
         });
-        // Filtrar propietarios únicos de las viviendas obtenidas
-        const inquilinos = viviendas_condominio
-            .map((vivienda) => vivienda.propietario)
-            .filter(
-                (propietario, index, self) =>
-                    self.findIndex((p) => p?.id === propietario?.id) === index,
-            );
-        res.json({ inquilinos });
+        res.json({
+            viviendas: viviendas_condominio,
+        });
     } catch (error) {
         res.status(500).json({ error: "Error al obtener los inquilinos" });
     }
@@ -412,7 +408,31 @@ condominioRouter.get("/:id/anuncios", async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({
-            error: "Error al obtener los anuncios del condominio",
+            error,
+        });
+    }
+});
+
+/**
+ * POST /api/condominios/:id/anuncios
+ * Crea un nuevo anuncio en un condominio
+ */
+condominioRouter.post("/:id/anuncios", async (req, res) => {
+    try {
+        // Validar entradas
+        const idCondominio = parseInt(req.params.id); // Obtener el ID de los parámetros de la URL
+        const anuncioParsed = anuncioSchema.parse(req.body);
+        // Crear anuncio
+        await prisma.anuncio.create({
+            data: {
+                ...anuncioParsed,
+                id_condominio: idCondominio,
+            },
+        });
+        res.sendStatus(200);
+    } catch (error) {
+        res.status(500).json({
+            error,
         });
     }
 });

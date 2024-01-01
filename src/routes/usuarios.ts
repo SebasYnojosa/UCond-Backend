@@ -5,6 +5,10 @@ import { z } from "zod";
 import { updateUserSchema } from "../schemas/user";
 import { pagoSchema } from "../schemas/pago";
 import multer from "multer";
+import {
+    obtenerMontoPagadoDeuda,
+    obtenerMontoPagadoGasto,
+} from "../../utils/montosRestantes";
 
 export const usuariosRouter = Router();
 const prisma = new PrismaClient();
@@ -125,6 +129,100 @@ usuariosRouter.get("/:userId/condominios", async (req, res) => {
         res.status(500).json({
             error: "Error al buscar los condominios del usuario",
         });
+    }
+});
+
+/**
+ * GET /api/usuarios/:userId/condosAdministrados
+ * Busca los condominios administrados por un usuario por su ID
+ */
+usuariosRouter.get("/:userId/condosAdministrados", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId); // Obtener el ID de los parámetros de la URL
+        // Hallar todos los condominios del usuario
+        const condominios = await prisma.condominio.findMany({
+            where: { id_administrador: userId },
+            select: {
+                id: true,
+                nombre: true,
+                url_pagina_actuarial: true,
+            },
+        });
+        res.json({ condominios });
+    } catch (error) {
+        res.status(500).json({
+            error,
+        });
+    }
+});
+
+/**
+ * GET /api/usuarios/:userId/viviendas
+ * Busca las viviendas de un usuario por su ID
+ */
+usuariosRouter.get("/:userId/viviendas", async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId); // Obtener el ID de los parámetros de la URL
+        // Obtener cédula de usuario
+        const cedula = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { cedula: true },
+        });
+        if (!cedula) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+        // Buscar viviendas del usuario
+        const viviendas = await prisma.vivienda.findMany({
+            where: {
+                OR: [
+                    { id_propietario: userId },
+                    { cedula_propietario: cedula.cedula },
+                ],
+            },
+            include: {
+                condominio: {
+                    select: { id_administrador: true, nombre: true },
+                },
+            },
+        });
+        res.json({
+            viviendas: viviendas
+                .filter(
+                    (vivienda) =>
+                        vivienda.condominio.id_administrador !== userId,
+                )
+                .map((vivienda) => ({
+                    id: vivienda.id,
+                    nombre: vivienda.nombre,
+                    id_condominio: vivienda.id_condominio,
+                    nombre_condominio: vivienda.condominio.nombre,
+                }))
+                .reduce(
+                    (
+                        r: Record<
+                            string,
+                            {
+                                id: number;
+                                nombre: string;
+                                id_condominio: number;
+                            }[]
+                        >,
+                        v,
+                    ) => {
+                        r[v.nombre_condominio] = r[v.nombre_condominio] || [];
+                        r[v.nombre_condominio].push({
+                            id: v.id,
+                            nombre: v.nombre,
+                            id_condominio: v.id_condominio,
+                        });
+                        return r;
+                    },
+                    Object.create(null),
+                ),
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error });
     }
 });
 
@@ -279,38 +377,61 @@ usuariosRouter.post(
             // Obtener informacion de deuda
             const deuda = await prisma.deuda.findUnique({
                 where: { id: pago.id_deuda },
-                include: { gasto: true },
+                include: { pagos: true },
             });
             if (!deuda) {
                 return res.status(404).json({ error: "Deuda no encontrada" });
             }
+            if (!deuda.activa) {
+                return res
+                    .status(400)
+                    .json({ error: "La deuda no está activa" });
+            }
 
-            // Registrar pago
-            const [pagoCreado, _deudaActualizada, _gastoActualizado] =
-                await prisma.$transaction([
-                    prisma.pago.create({ data: { ...pago } }),
-                    prisma.deuda.update({
-                        where: { id: pago.id_deuda },
-                        data: {
-                            monto_pagado:
-                                deuda.monto_pagado + pago.monto_pagado,
-                            activa:
-                                deuda.monto_pagado + pago.monto_pagado <
-                                deuda.monto_usuario,
-                        },
-                    }),
-                    prisma.gasto.update({
-                        where: { id: deuda.gasto.id },
-                        data: {
-                            monto_pagado:
-                                deuda.gasto.monto_pagado + pago.monto_pagado,
-                            activo:
-                                deuda.gasto.monto_pagado + pago.monto_pagado <
-                                deuda.gasto.monto,
-                        },
-                    }),
-                ]);
-            res.json({ pago: pagoCreado });
+            // Obtener información del gasto
+            const gasto = await prisma.gasto.findUnique({
+                where: { id: deuda.id_gasto },
+                include: { deudas: { include: { pagos: true } } },
+            });
+            if (!gasto) {
+                return res.status(404).json({ error: "Gasto no encontrado" });
+            }
+            if (!gasto.activo) {
+                return res
+                    .status(400)
+                    .json({ error: "El gasto no está activo" });
+            }
+
+            // Calcular cuánto se ha pagado del gasto
+            const montoPagadoGasto =
+                obtenerMontoPagadoGasto(gasto) + pago.monto_pagado;
+
+            // Calcular cuánto se ha pagado del gasto
+            const montoPagadoDeuda =
+                obtenerMontoPagadoDeuda(deuda) + pago.monto_pagado;
+
+            // Ejecutar operaciones de la BD
+            await prisma.$transaction(async (tx) => {
+                // Crear pago
+                await tx.pago.create({
+                    data: pago,
+                });
+                // Actualizar deuda
+                if (montoPagadoDeuda === deuda.monto_usuario) {
+                    await tx.deuda.update({
+                        where: { id: deuda.id },
+                        data: { activa: false },
+                    });
+                }
+                // Actualizar gasto
+                if (montoPagadoGasto === gasto.monto) {
+                    await tx.gasto.update({
+                        where: { id: gasto.id },
+                        data: { activo: false },
+                    });
+                }
+            });
+            res.sendStatus(200);
         } catch (error) {
             //Error de validacion
             if (error instanceof z.ZodError) {
