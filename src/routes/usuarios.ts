@@ -196,7 +196,29 @@ usuariosRouter.get("/:userId/viviendas", async (req, res) => {
                     nombre: vivienda.nombre,
                     id_condominio: vivienda.id_condominio,
                     nombre_condominio: vivienda.condominio.nombre,
-                })),
+                }))
+                .reduce(
+                    (
+                        r: Record<
+                            string,
+                            {
+                                id: number;
+                                nombre: string;
+                                id_condominio: number;
+                            }[]
+                        >,
+                        v,
+                    ) => {
+                        r[v.nombre_condominio] = r[v.nombre_condominio] || [];
+                        r[v.nombre_condominio].push({
+                            id: v.id,
+                            nombre: v.nombre,
+                            id_condominio: v.id_condominio,
+                        });
+                        return r;
+                    },
+                    Object.create(null),
+                ),
         });
     } catch (error) {
         console.error(error);
