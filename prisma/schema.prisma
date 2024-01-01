@@ -143,7 +143,7 @@ model Anuncio {
   id            Int        @id @default(autoincrement())
   asunto        String
   descripcion   String
-  fecha         DateTime
+  fecha         DateTime   @default(now())
   id_condominio Int
   condominio    Condominio @relation(fields: [id_condominio], references: [id])
 }

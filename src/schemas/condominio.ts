@@ -39,3 +39,16 @@ export const viviendaSchema = z.array(
 export const metodosPagoSchema = z.array(
     z.enum(["Zelle", "Pago Movil", "Paypal", "Efectivo"]),
 );
+
+// Para crear nuevos anuncios
+export const anuncioSchema = z.object({
+    asunto: z
+        .string()
+        .trim()
+        .min(1, "El asunto no puede estar vacío")
+        .max(255, "El asunto es muy largo (máximo 255 caracteres)"),
+    descripcion: z
+        .string()
+        .trim()
+        .min(1, "La descripción no puede estar vacía"),
+});
