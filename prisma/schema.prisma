@@ -87,7 +87,6 @@ model Gasto {
   condominio    Condominio @relation(fields: [id_condominio], references: [id])
   id_condominio Int        @unique
   monto         Float      @db.DoublePrecision
-  monto_pagado  Float      @default(0) @db.DoublePrecision
   concepto      String
   fecha_limite  DateTime
   tipo          String
@@ -103,7 +102,6 @@ model Deuda {
   gasto          Gasto   @relation(fields: [id_gasto], references: [id])
   id_gasto       Int     @unique
   monto_usuario  Float   @db.DoublePrecision
-  monto_pagado   Float   @default(0) @db.DoublePrecision
   activa         Boolean @default(true)
   pagos          Pago[]
 }
@@ -115,6 +113,8 @@ model Pago {
   monto_pagado    Float    @db.DoublePrecision
   fecha_pago      DateTime @default(now())
   metodo_pago     String
+  notas           String?
+  nro_referencia  String?
   url_comprobante String
 }
 

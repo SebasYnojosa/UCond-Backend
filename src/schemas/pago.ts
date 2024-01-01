@@ -14,4 +14,5 @@ export const pagoSchema = z.object({
         .max(255),
     url_comprobante: z.string().trim().max(255),
     notas: z.string().trim().max(255).optional(),
+    nro_referencia: z.string().trim().max(255).optional(),
 });
